@@ -1,0 +1,37 @@
+# Full audit of the tagged commit before a release ships. Blocks on high and
+# above, and also fails when the V12 run itself fails or times out, because
+# "no result" is not a pass for a release gate.
+name: V12 release gate
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  v12:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: metarsit/v12-action@v1
+        id: audit
+        with:
+          v12-token: ${{ secrets.V12_TOKEN }}
+          mode: full
+          fail-on: high
+          fail-on-error: true
+          wait-timeout-minutes: 180
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack-notify-on: always
+      - name: Record the audit on the release
+        if: always()
+        env:
+          RUN_URL: ${{ steps.audit.outputs.run-url }}
+          CONCLUSION: ${{ steps.audit.outputs.conclusion }}
+        run: printf 'V12 run %s finished with conclusion %s\n' "$RUN_URL" "$CONCLUSION"

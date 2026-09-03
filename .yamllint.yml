@@ -1,0 +1,18 @@
+# yamllint configuration for v12-action.
+extends: default
+ignore: |
+  test/golden/
+  node_modules/
+rules:
+  line-length:
+    max: 200
+    allow-non-breakable-inline-mappings: true
+  truthy:
+    allowed-values: ['true', 'false', 'on']
+    check-keys: false
+  document-start: disable
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: disable
+  braces:
+    max-spaces-inside: 1

@@ -1,0 +1,7 @@
+# Review is required from the maintainers for the files other people's
+# security depends on.
+action.yml            @metarsit
+/scripts/             @metarsit
+/schema/              @metarsit
+/.github/workflows/   @metarsit
+/test/stub-api.py     @metarsit

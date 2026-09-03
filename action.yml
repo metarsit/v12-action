@@ -1,0 +1,609 @@
+name: 'V12 Security Audit'
+description: >-
+  Run V12 (v12.sh) security audits from CI: diff reviews on pull requests,
+  scheduled sweeps, release gates. Results land in a sticky PR comment, a
+  check run with inline annotations, the Security tab (SARIF), the job
+  summary and Slack. Estimates before every run and enforces a cost ceiling.
+author: 'metarsit'
+branding:
+  icon: 'shield'
+  color: 'purple'
+
+inputs:
+  # --- V12 -------------------------------------------------------------------
+  v12-token:
+    description: >-
+      V12 personal access token (v12p_*) with the runs:read and runs:write
+      scopes (runs:manage to cancel runs). Create it at v12.sh Settings ->
+      Developer while switched to the organization that owns the repository.
+      Leave empty on pull requests from forks; the action skips them.
+    required: false
+    default: ''
+  api-url:
+    description: 'V12 base URL. Change only for testing against a stub.'
+    required: false
+    default: 'https://v12.sh'
+  repository:
+    description: 'GitHub repository to audit as owner/name. Defaults to the current repository.'
+    required: false
+    default: ${{ github.repository }}
+  mode:
+    description: >-
+      What to audit: auto (infer from the event), pr (diff of the pull request
+      or merge group), diff (a range: since, or base-ref/head-ref), full (the
+      whole tree at branch/sha).
+    required: false
+    default: 'auto'
+  since:
+    description: >-
+      Time window for diff mode, resolved from git history, e.g. "7 days ago"
+      or "2026-01-31". Needs fetch-depth: 0 on actions/checkout.
+    required: false
+    default: ''
+  base-ref:
+    description: 'Explicit base ref or SHA for diff mode (overrides since).'
+    required: false
+    default: ''
+  head-ref:
+    description: 'Explicit head ref or SHA for diff mode. Defaults to HEAD.'
+    required: false
+    default: ''
+  branch:
+    description: 'Branch or tag name for full mode. Defaults to the event ref name.'
+    required: false
+    default: ''
+  sha:
+    description: 'Commit SHA for full mode. Defaults to the event SHA.'
+    required: false
+    default: ''
+  name:
+    description: 'Run name shown in V12. Defaults to a name derived from the event.'
+    required: false
+    default: ''
+  paths:
+    description: >-
+      Paths or globs to audit, comma or newline separated. Directory prefixes
+      (contracts/, contracts/**) are sent to V12 and reduce cost; other globs
+      are expanded against the tree (at most 500 entries). Default: whole
+      tree (config: paths.include).
+    required: false
+    default: ''
+  exclude-paths:
+    description: >-
+      Globs whose findings are hidden, comma or newline separated. Applied by
+      the action, not V12, so they do not reduce cost. Default: none
+      (config: paths.exclude).
+    required: false
+    default: ''
+  context-documents:
+    description: 'V12 context document UIDs (UUIDs) attached to the run, comma or newline separated. Default: none (config: context-documents).'
+    required: false
+    default: ''
+  config-file:
+    description: 'Path of the repository config file. Default: .github/v12-audit.yml (optional unless set explicitly).'
+    required: false
+    default: ''
+
+  # --- cost and lifecycle ------------------------------------------------------
+  estimate-only:
+    description: 'Only request the estimate; create nothing. Prints the quote and sets estimate-cents.'
+    required: false
+    default: 'false'
+  max-cost-cents:
+    description: 'Abort before creating a run when the estimate exceeds this many US cents. Default: no ceiling (config: defaults.max-cost-cents).'
+    required: false
+    default: ''
+  skip-if-unchanged:
+    description: 'Skip diff reviews whose range has no changes after path filters, or that V12 quotes at 0 changed lines. Default: true (config: defaults.skip-if-unchanged).'
+    required: false
+    default: ''
+  wait:
+    description: 'Wait for the run to finish. When false the job ends after the run is created. Default: true (config: defaults.wait).'
+    required: false
+    default: ''
+  wait-timeout-minutes:
+    description: 'How long to wait for the run before exiting 0 with state timed_out. Default: 60 (config: defaults.wait-timeout-minutes).'
+    required: false
+    default: ''
+  poll-interval-seconds:
+    description: 'Seconds between status polls (5..3600). Default: 15 (config: defaults.poll-interval-seconds).'
+    required: false
+    default: ''
+  cancel-on-workflow-cancel:
+    description: 'Cancel the V12 run when the workflow is cancelled or the step is interrupted, so a usage-billed review does not keep running.'
+    required: false
+    default: 'true'
+  fetch-report:
+    description: 'Download the Markdown report of a completed run and expose it as report-path. Default: true (config: defaults.fetch-report).'
+    required: false
+    default: ''
+  max-findings-detail:
+    description: 'When V12 returns a summary-only findings list, fetch details for at most this many findings, most severe first. Default: 200 (config: defaults.max-findings-detail).'
+    required: false
+    default: ''
+
+  # --- filters and gate ---------------------------------------------------------
+  fail-on:
+    description: 'Fail the job when a finding at this severity or above survives filtering: none, critical, high, medium, low, info, qa. Default: none (config: defaults.fail-on).'
+    required: false
+    default: ''
+  include-validity:
+    description: 'Validity states that count as findings: valid, unreviewed, acknowledged, invalid. Default: valid,unreviewed (config: defaults.include-validity).'
+    required: false
+    default: ''
+  ignore-auto-invalidated:
+    description: 'Drop findings that V12 auto-invalidated while they are still unreviewed. A reviewer marking a finding valid always wins. Default: false (config: defaults.ignore-auto-invalidated).'
+    required: false
+    default: ''
+  min-severity:
+    description: 'Lowest severity shown on any surface: critical, high, medium, low, info, qa. Default: info, which hides qa (config: defaults.min-severity).'
+    required: false
+    default: ''
+  fail-on-error:
+    description: 'Fail the job when the V12 run ends failed or cancelled, or when waiting times out. Default: false (config: defaults.fail-on-error).'
+    required: false
+    default: ''
+
+  # --- GitHub surfaces -------------------------------------------------------------
+  github-token:
+    description: 'Token for the comment, check run and SARIF upload. Needs pull-requests: write, checks: write and security-events: write respectively.'
+    required: false
+    default: ${{ github.token }}
+  comment:
+    description: 'Post or update the sticky pull request comment. Default: true (config: defaults.comment).'
+    required: false
+    default: ''
+  comment-key:
+    description: 'Distinguishes comments when the action runs several times on one pull request (matrix jobs). Defaults to the mode.'
+    required: false
+    default: ''
+  pr-number:
+    description: 'Pull request to comment on when the event carries none (workflow_dispatch).'
+    required: false
+    default: ''
+  hide-comment-when-clean:
+    description: 'Leave no comment when no findings survive filtering; an existing comment is removed. Default: false (config: defaults.hide-comment-when-clean).'
+    required: false
+    default: ''
+  max-comment-findings:
+    description: 'Findings rendered with full details in the comment; the body shrinks further to stay under GitHub''s size limit. Default: 25 (config: defaults.max-comment-findings).'
+    required: false
+    default: ''
+  check-run:
+    description: 'Create the check run with inline annotations. Default: true (config: defaults.check-run).'
+    required: false
+    default: ''
+  check-run-name:
+    description: 'Name of the check run. Default: V12 Security (config: defaults.check-run-name).'
+    required: false
+    default: ''
+  max-annotations:
+    description: 'Maximum inline annotations, posted in batches of 50. Default: 200 (config: defaults.max-annotations).'
+    required: false
+    default: ''
+  sarif-path:
+    description: 'Where to write the SARIF file (relative to the workspace). Default: a file under the runner temp directory, exposed as sarif-path.'
+    required: false
+    default: ''
+  upload-sarif:
+    description: 'Upload the SARIF to code scanning from within the action (needs security-events: write; skipped on fork pull requests). Default: false (config: defaults.upload-sarif).'
+    required: false
+    default: ''
+  sarif-category:
+    description: 'Code scanning category. Default: v12-audit/<mode> (config: defaults.sarif-category).'
+    required: false
+    default: ''
+  job-summary:
+    description: 'Write the job summary. Default: true (config: defaults.job-summary).'
+    required: false
+    default: ''
+
+  # --- Slack -----------------------------------------------------------------------
+  slack-webhook:
+    description: 'Slack incoming webhook URL (one-shot messages, no updates).'
+    required: false
+    default: ''
+  slack-bot-token:
+    description: 'Slack bot token (xoxb-*) with chat:write; enables updating the message in place and thread replies. Requires slack-channel.'
+    required: false
+    default: ''
+  slack-channel:
+    description: 'Channel ID for bot-token delivery. Default: none (config: notifications.slack.channel).'
+    required: false
+    default: ''
+  slack-notify-on:
+    description: 'When to notify: always, findings, gate-failure, never. Default: gate-failure (config: notifications.slack.notify-on).'
+    required: false
+    default: ''
+  slack-mention-on-critical:
+    description: 'Mention inserted when a critical finding is present, e.g. <@U0123> or <!subteam^S0123>. Default: none (config: notifications.slack.mention-on-critical).'
+    required: false
+    default: ''
+  slack-thread:
+    description: 'Reply in the thread of the previous message for the same pull request (bot token only). Default: true (config: notifications.slack.thread).'
+    required: false
+    default: ''
+  slack-include-snippets:
+    description: >-
+      Include finding descriptions and code snippets in Slack. Off by default
+      because Slack retention is not the security team's call. Default: false
+      (config: notifications.slack.include-snippets).
+    required: false
+    default: ''
+  slack-max-findings:
+    description: 'Findings listed in the Slack message. Default: 5 (config: notifications.slack.max-findings).'
+    required: false
+    default: ''
+
+outputs:
+  run-uid:
+    description: 'V12 run UID, empty when no run was created.'
+    value: ${{ steps.run.outputs.run-uid }}
+  run-url:
+    description: 'Link to the run on V12.'
+    value: ${{ steps.run.outputs.run-url }}
+  state:
+    description: 'Run state as seen by the action: queued, running, completed, failed, cancelled, timed_out, not-created.'
+    value: ${{ steps.gate.outputs.state }}
+  conclusion:
+    description: 'success, neutral, failure, skipped, timed_out, cancelled.'
+    value: ${{ steps.gate.outputs.conclusion || steps.preflight.outputs.conclusion }}
+  skipped-reason:
+    description: 'Why nothing was audited: fork-pr, empty-diff, over-budget, estimate-only, no-previous-commit, branch-deleted, no-matching-paths.'
+    value: >-
+      ${{ steps.estimate.outputs.skipped-reason
+          || steps.refs.outputs.skipped-reason
+          || steps.preflight.outputs.skipped-reason }}
+  estimate-cents:
+    description: 'Quoted price in US cents (priceCents for fixed billing, estimatedPriceCents for usage billing).'
+    value: ${{ steps.estimate.outputs.estimate-cents }}
+  cost-cents:
+    description: 'Realized cost in US cents from the run object, empty until known.'
+    value: ${{ steps.run.outputs.cost-cents }}
+  billing-mode:
+    description: 'fixed or usage.'
+    value: ${{ steps.estimate.outputs.billing-mode }}
+  duration-seconds:
+    description: 'Run duration from V12 timestamps.'
+    value: ${{ steps.run.outputs.duration-seconds }}
+  critical-count:
+    description: 'Critical findings after filtering and suppressions.'
+    value: ${{ steps.gate.outputs.critical-count }}
+  high-count:
+    description: 'High findings after filtering and suppressions.'
+    value: ${{ steps.gate.outputs.high-count }}
+  medium-count:
+    description: 'Medium findings after filtering and suppressions.'
+    value: ${{ steps.gate.outputs.medium-count }}
+  low-count:
+    description: 'Low findings after filtering and suppressions.'
+    value: ${{ steps.gate.outputs.low-count }}
+  info-count:
+    description: 'Info findings after filtering and suppressions.'
+    value: ${{ steps.gate.outputs.info-count }}
+  qa-count:
+    description: 'QA findings after filtering and suppressions (hidden unless min-severity is qa).'
+    value: ${{ steps.gate.outputs.qa-count }}
+  total-count:
+    description: 'All findings after filtering and suppressions.'
+    value: ${{ steps.gate.outputs.total-count }}
+  gate-count:
+    description: 'Findings at or above fail-on.'
+    value: ${{ steps.gate.outputs.gate-count }}
+  suppressed-count:
+    description: 'Findings hidden by active suppressions.'
+    value: ${{ steps.gate.outputs.suppressed-count }}
+  new-count:
+    description: 'Findings new since the previous comment on this pull request (empty on the first run).'
+    value: ${{ steps.delta.outputs.new-count }}
+  resolved-count:
+    description: 'Findings resolved since the previous comment on this pull request.'
+    value: ${{ steps.delta.outputs.resolved-count }}
+  findings-json:
+    description: 'Filtered findings as a JSON array (empty array when larger than 900 KB; use findings-path).'
+    value: ${{ steps.gate.outputs.findings-json }}
+  findings-path:
+    description: 'Path of the filtered findings JSON file.'
+    value: ${{ steps.gate.outputs.findings-path }}
+  results-path:
+    description: 'Path of the full report JSON (counts, gate, target, cost) every surface renders from.'
+    value: ${{ steps.gate.outputs.results-path }}
+  sarif-path:
+    description: 'Path of the SARIF file.'
+    value: ${{ steps.render-sarif.outputs.sarif-path }}
+  report-path:
+    description: 'Path of the Markdown report downloaded from V12 (empty when unavailable).'
+    value: ${{ steps.run.outputs.report-path }}
+  comment-url:
+    description: 'URL of the pull request comment.'
+    value: ${{ steps.post-comment.outputs.comment-url }}
+  check-run-url:
+    description: 'URL of the check run.'
+    value: ${{ steps.check-run.outputs.check-run-url }}
+  slack-ts:
+    description: 'Timestamp of the Slack message (bot token only), usable for chat.update.'
+    value: ${{ steps.slack.outputs.slack-ts }}
+  work-dir:
+    description: 'Working directory with every intermediate file (config.json, refs.json, estimate.json, report.json, comment.md, summary.md).'
+    value: ${{ steps.preflight.outputs.work-dir }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: preflight
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_TOKEN: ${{ inputs.v12-token }}
+        V12_API_URL: ${{ inputs.api-url }}
+        V12_INPUT_PR_NUMBER: ${{ inputs.pr-number }}
+      run: |
+        V12_ACTION_VERSION="$(cat "$V12_ACTION_PATH/VERSION")"
+        export V12_ACTION_VERSION
+        bash "$V12_ACTION_PATH/scripts/preflight.sh"
+
+    - id: config
+      if: steps.preflight.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+        V12_INPUT_REPOSITORY: ${{ inputs.repository }}
+        V12_INPUT_MODE: ${{ inputs.mode }}
+        V12_INPUT_SINCE: ${{ inputs.since }}
+        V12_INPUT_BASE_REF: ${{ inputs.base-ref }}
+        V12_INPUT_HEAD_REF: ${{ inputs.head-ref }}
+        V12_INPUT_BRANCH: ${{ inputs.branch }}
+        V12_INPUT_SHA: ${{ inputs.sha }}
+        V12_INPUT_NAME: ${{ inputs.name }}
+        V12_INPUT_PATHS: ${{ inputs.paths }}
+        V12_INPUT_EXCLUDE_PATHS: ${{ inputs.exclude-paths }}
+        V12_INPUT_CONTEXT_DOCUMENTS: ${{ inputs.context-documents }}
+        V12_INPUT_CONFIG_FILE: ${{ inputs.config-file }}
+        V12_INPUT_ESTIMATE_ONLY: ${{ inputs.estimate-only }}
+        V12_INPUT_MAX_COST_CENTS: ${{ inputs.max-cost-cents }}
+        V12_INPUT_SKIP_IF_UNCHANGED: ${{ inputs.skip-if-unchanged }}
+        V12_INPUT_WAIT: ${{ inputs.wait }}
+        V12_INPUT_WAIT_TIMEOUT_MINUTES: ${{ inputs.wait-timeout-minutes }}
+        V12_INPUT_POLL_INTERVAL_SECONDS: ${{ inputs.poll-interval-seconds }}
+        V12_INPUT_CANCEL_ON_WORKFLOW_CANCEL: ${{ inputs.cancel-on-workflow-cancel }}
+        V12_INPUT_FETCH_REPORT: ${{ inputs.fetch-report }}
+        V12_INPUT_MAX_FINDINGS_DETAIL: ${{ inputs.max-findings-detail }}
+        V12_INPUT_FAIL_ON: ${{ inputs.fail-on }}
+        V12_INPUT_INCLUDE_VALIDITY: ${{ inputs.include-validity }}
+        V12_INPUT_IGNORE_AUTO_INVALIDATED: ${{ inputs.ignore-auto-invalidated }}
+        V12_INPUT_MIN_SEVERITY: ${{ inputs.min-severity }}
+        V12_INPUT_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
+        V12_INPUT_COMMENT: ${{ inputs.comment }}
+        V12_INPUT_COMMENT_KEY: ${{ inputs.comment-key }}
+        V12_INPUT_PR_NUMBER: ${{ inputs.pr-number }}
+        V12_INPUT_HIDE_COMMENT_WHEN_CLEAN: ${{ inputs.hide-comment-when-clean }}
+        V12_INPUT_MAX_COMMENT_FINDINGS: ${{ inputs.max-comment-findings }}
+        V12_INPUT_CHECK_RUN: ${{ inputs.check-run }}
+        V12_INPUT_CHECK_RUN_NAME: ${{ inputs.check-run-name }}
+        V12_INPUT_MAX_ANNOTATIONS: ${{ inputs.max-annotations }}
+        V12_INPUT_SARIF_PATH: ${{ inputs.sarif-path }}
+        V12_INPUT_UPLOAD_SARIF: ${{ inputs.upload-sarif }}
+        V12_INPUT_SARIF_CATEGORY: ${{ inputs.sarif-category }}
+        V12_INPUT_JOB_SUMMARY: ${{ inputs.job-summary }}
+        V12_INPUT_SLACK_WEBHOOK: ${{ inputs.slack-webhook }}
+        V12_INPUT_SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
+        V12_INPUT_SLACK_CHANNEL: ${{ inputs.slack-channel }}
+        V12_INPUT_SLACK_NOTIFY_ON: ${{ inputs.slack-notify-on }}
+        V12_INPUT_SLACK_MENTION_ON_CRITICAL: ${{ inputs.slack-mention-on-critical }}
+        V12_INPUT_SLACK_THREAD: ${{ inputs.slack-thread }}
+        V12_INPUT_SLACK_INCLUDE_SNIPPETS: ${{ inputs.slack-include-snippets }}
+        V12_INPUT_SLACK_MAX_FINDINGS: ${{ inputs.slack-max-findings }}
+      run: bash "$V12_ACTION_PATH/scripts/config.sh"
+
+    - id: refs
+      if: steps.preflight.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+      run: bash "$V12_ACTION_PATH/scripts/resolve-refs.sh"
+
+    - id: estimate
+      if: steps.preflight.outputs.skipped != 'true' && steps.refs.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+        V12_TOKEN: ${{ inputs.v12-token }}
+        V12_API_URL: ${{ inputs.api-url }}
+      run: bash "$V12_ACTION_PATH/scripts/estimate.sh"
+
+    - id: run
+      if: steps.preflight.outputs.skipped != 'true' && steps.refs.outputs.skipped != 'true' && steps.estimate.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+        V12_TOKEN: ${{ inputs.v12-token }}
+        V12_API_URL: ${{ inputs.api-url }}
+      run: bash "$V12_ACTION_PATH/scripts/create-and-wait.sh"
+
+    - id: cancel
+      if: cancelled() && steps.run.outputs.run-uid != '' && inputs.cancel-on-workflow-cancel == 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+        V12_TOKEN: ${{ inputs.v12-token }}
+        V12_API_URL: ${{ inputs.api-url }}
+      run: bash "$V12_ACTION_PATH/scripts/cancel-run.sh" 90
+
+    - id: collect
+      if: steps.preflight.outputs.skipped != 'true' && !cancelled()
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+        V12_TOKEN: ${{ inputs.v12-token }}
+        V12_API_URL: ${{ inputs.api-url }}
+      run: |
+        V12_ACTION_VERSION="$(cat "$V12_ACTION_PATH/VERSION")"
+        export V12_ACTION_VERSION
+        bash "$V12_ACTION_PATH/scripts/collect-findings.sh"
+        bash "$V12_ACTION_PATH/scripts/suppress.sh"
+
+    - id: find-comment
+      if: steps.collect.outcome == 'success' && steps.preflight.outputs.skipped != 'true'
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_COMMENT_KEY: ${{ steps.refs.outputs.comment-key || inputs.comment-key || 'audit' }}
+        V12_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr-number }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const comment = require(process.env.V12_ACTION_PATH + '/scripts/github/comment.js');
+          await comment.find({ github, context, core }, {
+            marker: '<!-- v12-audit-action:' + process.env.V12_COMMENT_KEY + ' -->',
+            issueNumber: process.env.V12_PR_NUMBER,
+          });
+
+    - id: delta
+      if: steps.collect.outcome == 'success' && steps.preflight.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+        V12_PRIOR_STATE: ${{ steps.find-comment.outputs.prior-state }}
+      run: bash "$V12_ACTION_PATH/scripts/delta.sh"
+
+    - id: slack
+      if: steps.collect.outcome == 'success' && steps.preflight.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+        V12_SLACK_WEBHOOK: ${{ inputs.slack-webhook }}
+        V12_SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
+        V12_PRIOR_STATE: ${{ steps.find-comment.outputs.prior-state }}
+      run: |
+        V12_ACTION_VERSION="$(cat "$V12_ACTION_PATH/VERSION")"
+        export V12_ACTION_VERSION
+        bash "$V12_ACTION_PATH/scripts/notify-slack.sh"
+
+    - id: render-comment
+      if: steps.collect.outcome == 'success' && steps.preflight.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+        V12_SLACK_TS: ${{ steps.slack.outputs.slack-ts }}
+        V12_SLACK_CHANNEL: ${{ steps.slack.outputs.slack-channel }}
+      run: |
+        V12_ACTION_VERSION="$(cat "$V12_ACTION_PATH/VERSION")"
+        export V12_ACTION_VERSION
+        bash "$V12_ACTION_PATH/scripts/render-comment.sh"
+
+    - id: post-comment
+      if: >-
+        steps.render-comment.outcome == 'success'
+        && steps.render-comment.outputs.comment-action != 'skip'
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_COMMENT_MARKER: ${{ steps.render-comment.outputs.comment-marker }}
+        V12_COMMENT_PATH: ${{ steps.render-comment.outputs.comment-path }}
+        V12_COMMENT_ACTION: ${{ steps.render-comment.outputs.comment-action }}
+        V12_COMMENT_ID: ${{ steps.find-comment.outputs.comment-id }}
+        V12_PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr-number }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const comment = require(process.env.V12_ACTION_PATH + '/scripts/github/comment.js');
+          await comment.post({ github, context, core }, {
+            marker: process.env.V12_COMMENT_MARKER,
+            issueNumber: process.env.V12_PR_NUMBER,
+            bodyPath: process.env.V12_COMMENT_PATH,
+            action: process.env.V12_COMMENT_ACTION,
+            existingId: process.env.V12_COMMENT_ID,
+          });
+
+    - id: render-check
+      if: steps.collect.outcome == 'success' && steps.preflight.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+      run: |
+        V12_ACTION_VERSION="$(cat "$V12_ACTION_PATH/VERSION")"
+        export V12_ACTION_VERSION
+        bash "$V12_ACTION_PATH/scripts/render-check.sh"
+
+    - id: check-run
+      if: steps.render-check.outcome == 'success' && steps.render-check.outputs.check-action == 'create'
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_CHECK_PATH: ${{ steps.render-check.outputs.check-path }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const checkRun = require(process.env.V12_ACTION_PATH + '/scripts/github/check-run.js');
+          await checkRun.create({ github, context, core }, { payloadPath: process.env.V12_CHECK_PATH });
+
+    - id: render-sarif
+      if: steps.collect.outcome == 'success' && steps.preflight.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+      run: |
+        V12_ACTION_VERSION="$(cat "$V12_ACTION_PATH/VERSION")"
+        export V12_ACTION_VERSION
+        bash "$V12_ACTION_PATH/scripts/render-sarif.sh"
+
+    - id: upload-sarif
+      if: >-
+        steps.render-sarif.outcome == 'success'
+        && steps.render-sarif.outputs.sarif-path != ''
+        && (inputs.upload-sarif == 'true' || steps.config.outputs.upload-sarif == 'true')
+        && steps.preflight.outputs.is-fork != 'true'
+      uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4
+      continue-on-error: true
+      with:
+        sarif_file: ${{ steps.render-sarif.outputs.sarif-path }}
+        category: ${{ steps.render-sarif.outputs.sarif-category }}
+        token: ${{ inputs.github-token }}
+
+    - id: sarif-notice
+      if: steps.upload-sarif.outcome == 'failure'
+      shell: bash
+      run: |
+        printf '::warning::%s %s\n' \
+          'The SARIF upload to code scanning failed. It needs "security-events: write" in the job permissions' \
+          'and code scanning enabled for the repository; the SARIF file is still available as the sarif-path output.'
+
+    - id: summary
+      if: steps.collect.outcome == 'success' && steps.preflight.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+        V12_SURFACE_COMMENT: >-
+          ${{ steps.post-comment.outputs.comment-outcome
+              || steps.render-comment.outputs.comment-skip-reason
+              || 'skipped' }}
+        V12_SURFACE_CHECK: ${{ steps.check-run.outputs.check-run-outcome || 'skipped' }}
+        V12_SURFACE_SARIF: >-
+          ${{ steps.upload-sarif.outcome == 'success' && 'uploaded'
+              || steps.upload-sarif.outcome == 'failure' && 'upload failed (see warning)'
+              || 'written, not uploaded' }}
+        V12_SURFACE_SLACK: ${{ steps.slack.outputs.slack-outcome || 'skipped' }}
+      run: |
+        V12_ACTION_VERSION="$(cat "$V12_ACTION_PATH/VERSION")"
+        export V12_ACTION_VERSION
+        bash "$V12_ACTION_PATH/scripts/render-summary.sh"
+
+    - id: gate
+      if: steps.collect.outcome == 'success' && steps.preflight.outputs.skipped != 'true'
+      shell: bash
+      env:
+        V12_ACTION_PATH: ${{ github.action_path }}
+        V12_WORK_DIR: ${{ steps.preflight.outputs.work-dir }}
+      run: bash "$V12_ACTION_PATH/scripts/gate.sh"

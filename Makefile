@@ -28,10 +28,15 @@ lint-shell: ## shellcheck + shfmt
 lint-bash32: ## reject bash 4+ features and GNU-only flags
 	bash test/lint-bash32.sh
 
+ZIZMOR_FLAGS ?= --offline
+WORKFLOW_EXAMPLES := $(filter-out examples/v12-audit.yml,$(wildcard examples/*.yml))
+
 lint-actions: ## actionlint, zizmor and the custom workflow lints
-	actionlint
-	zizmor --min-severity low .
+	actionlint .github/workflows/*.yml $(WORKFLOW_EXAMPLES)
+	zizmor $(ZIZMOR_FLAGS) --min-severity low .
 	bash test/lint-workflows.sh
+	bash test/lint-inputs.sh
+	bash test/lint-branding.sh
 
 lint-yaml: ## yamllint with the committed config
 	yamllint -c .yamllint.yml .

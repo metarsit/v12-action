@@ -1,0 +1,101 @@
+# Release on tag push: validate, test, create the GitHub release from the
+# changelog, and move the v1 major tag to the release commit.
+name: Release
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install tooling
+        # zizmor: ignore[adhoc-packages] versions are pinned; no lockfile exists for CLI tools
+        run: |
+          set -euo pipefail
+          pip install --quiet "yamllint==1.35.1" "check-jsonschema==0.31.0" "jsonschema==4.23.0" "pyyaml==6.0.2"
+          npm install --global bats@1.11.1
+          go install mvdan.cc/sh/v3/cmd/shfmt@v3.10.0
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+      - name: Tag, VERSION and CHANGELOG agree
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          if [ "$(cat VERSION)" != "$version" ]; then
+            echo "::error::VERSION is $(cat VERSION) but the tag is $TAG"
+            exit 1
+          fi
+          if ! grep -Eq "^## \[?${version}\]? " CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## ${version} (date)' section for this release"
+            exit 1
+          fi
+      - name: Validate action.yml
+        run: |
+          set -euo pipefail
+          check-jsonschema --builtin-schema vendor.github-actions action.yml
+          bash test/lint-branding.sh
+          bash test/lint-workflows.sh
+          bash test/lint-inputs.sh
+      - name: Full offline suite
+        run: |
+          set -euo pipefail
+          shellcheck -x -S style scripts/*.sh scripts/dev/*.sh test/*.sh test/test_helper.bash
+          bash test/lint-bash32.sh
+          make test
+
+  release:
+    name: Create the release and move v1
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true # pushes the moved major tag
+      - name: Release notes from the changelog
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[?" v "\\]? " { on = 1; next }
+            on && /^## / { exit }
+            on { print }
+          ' CHANGELOG.md > release-notes.md
+          [ -s release-notes.md ] || echo "See CHANGELOG.md." > release-notes.md
+          cat release-notes.md
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --title "$TAG" --notes-file release-notes.md --verify-tag
+      - name: Move the major tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          major="v${TAG#v}"
+          major="${major%%.*}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -fa "$major" -m "Move $major to $TAG" "$TAG"
+          git push --force origin "refs/tags/$major"
+          echo "moved $major to $TAG"

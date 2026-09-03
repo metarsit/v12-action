@@ -116,7 +116,7 @@ last_estimate_body() { stub_requests POST /api/v1/runs/estimate | tail -1 | jq -
   [ "$status" -eq 0 ]
   [ "$(output_value skipped)" = "true" ]
   [ "$(output_value skipped-reason)" = "estimate-only" ]
-  [ "$(output_value conclusion)" = "estimate-only" ]
+  [ "$(output_value conclusion)" = "skipped" ]
   [ "$(output_value estimate-cents)" = "9900" ]
   [[ "$output" == *"::notice::estimate-only: V12 quoted \$99.00"* ]]
 }

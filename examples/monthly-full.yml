@@ -1,0 +1,33 @@
+# Monthly full-tree audit of the default branch (fixed price, charged when
+# the run starts). The ceiling protects against surprises when the tree
+# grows; raise it deliberately.
+name: V12 monthly full audit
+
+on:
+  schedule:
+    - cron: '0 5 1 * *' # first day of the month, 05:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  security-events: write # SARIF into the Security tab
+
+jobs:
+  v12:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: metarsit/v12-action@v1
+        with:
+          v12-token: ${{ secrets.V12_TOKEN }}
+          mode: full
+          paths: |
+            contracts/
+            src/
+          max-cost-cents: 25000
+          wait-timeout-minutes: 180
+          upload-sarif: true

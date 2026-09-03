@@ -92,4 +92,6 @@ fi
 
 jq '.config' "$merged" >"$(work_file config.json)"
 set_output config-file-loaded "$loaded"
+# action.yml needs a few effective values for step conditions.
+set_output upload-sarif "$(jq -r '.uploadSarif' "$(work_file config.json)")"
 log_debug "effective config: $(jq -c . "$(work_file config.json)")"

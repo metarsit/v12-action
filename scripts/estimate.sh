@@ -136,7 +136,7 @@ if [ "$(json_get "$config_json" '.estimateOnly')" = "true" ]; then
   mv "$(work_file refs.tmp)" "$refs_json"
   set_output skipped "true"
   set_output skipped-reason "estimate-only"
-  set_output conclusion "estimate-only"
+  set_output conclusion "skipped"
   exit 0
 fi
 set_output skipped "false"

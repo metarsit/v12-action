@@ -1,0 +1,31 @@
+# Dry run: quotes the review of every pull request without creating a run
+# or charging anything (one call in the 30-per-hour estimate bucket). Use
+# it to size max-cost-cents before enabling reviews, or as a cheap smoke
+# test that the token and scopes work.
+name: V12 estimate
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  estimate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: metarsit/v12-action@v1
+        id: quote
+        with:
+          v12-token: ${{ secrets.V12_TOKEN }}
+          estimate-only: true
+      - name: Show the quote
+        env:
+          CENTS: ${{ steps.quote.outputs.estimate-cents }}
+          MODE: ${{ steps.quote.outputs.billing-mode }}
+        run: printf 'V12 would charge about %s cents (%s billing) for this review\n' "$CENTS" "$MODE"

@@ -1,0 +1,4 @@
+[codespell]
+skip = .git,test/golden,test/fixtures,*.sarif,*.json,node_modules,test/js
+ignore-words-list = nd,ba,fpr,aks,crate,wast
+quiet-level = 3
