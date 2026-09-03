@@ -1,0 +1,28 @@
+# Caller for reusable-workflow.yml, dropped into each repository. The
+# organization-level V12_TOKEN secret is one token bound to one V12
+# organization; repositories owned by another V12 organization need their
+# own token.
+name: V12 security review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: v12-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  review:
+    if: ${{ !github.event.pull_request.draft }}
+    uses: your-org/.github/.github/workflows/v12-review.yml@main
+    with:
+      fail-on: none
+    secrets:
+      V12_TOKEN: ${{ secrets.V12_TOKEN }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

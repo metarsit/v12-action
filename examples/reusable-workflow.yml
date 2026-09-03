@@ -1,0 +1,50 @@
+# Reusable workflow for an organization: keep this file in a central
+# repository (for example .github/workflows/v12-review.yml in org/.github)
+# and call it from every repository with the caller shown in
+# multi-repo-caller.yml. Secrets are passed explicitly.
+name: V12 review (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      fail-on:
+        type: string
+        default: none
+      max-cost-cents:
+        type: string
+        default: '5000'
+    secrets:
+      V12_TOKEN:
+        required: true
+      SLACK_WEBHOOK:
+        required: false
+    outputs:
+      conclusion:
+        value: ${{ jobs.v12.outputs.conclusion }}
+      run-url:
+        value: ${{ jobs.v12.outputs.run-url }}
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  v12:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      conclusion: ${{ steps.audit.outputs.conclusion }}
+      run-url: ${{ steps.audit.outputs.run-url }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: metarsit/v12-action@v1
+        id: audit
+        with:
+          v12-token: ${{ secrets.V12_TOKEN }}
+          fail-on: ${{ inputs.fail-on }}
+          max-cost-cents: ${{ inputs.max-cost-cents }}
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK }}

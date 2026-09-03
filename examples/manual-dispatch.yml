@@ -1,0 +1,53 @@
+# Manual run with the mode chosen at dispatch time. Useful for a one-off
+# window review, a dry-run estimate, or commenting on a specific pull
+# request from a manual run.
+name: V12 audit (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'What to audit'
+        type: choice
+        options: [full, diff]
+        default: full
+      since:
+        description: 'Window for diff mode, e.g. "14 days ago"'
+        type: string
+        default: '14 days ago'
+      fail-on:
+        description: 'Fail the job at this severity or above'
+        type: choice
+        options: [none, critical, high, medium, low]
+        default: none
+      estimate-only:
+        description: 'Only print the quote, create nothing'
+        type: boolean
+        default: false
+      pr-number:
+        description: 'Pull request to comment on (optional)'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  v12:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: metarsit/v12-action@v1
+        with:
+          v12-token: ${{ secrets.V12_TOKEN }}
+          mode: ${{ inputs.mode }}
+          since: ${{ inputs.mode == 'diff' && inputs.since || '' }}
+          fail-on: ${{ inputs.fail-on }}
+          estimate-only: ${{ inputs.estimate-only }}
+          pr-number: ${{ inputs.pr-number }}

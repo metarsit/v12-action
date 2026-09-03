@@ -1,0 +1,10 @@
+{
+  "name": "V12 Security",
+  "headSha": "1111111111111111111111111111111111111111",
+  "conclusion": "skipped",
+  "detailsUrl": "https://v12.sh",
+  "title": "V12 security review: skipped, nothing to review",
+  "summary": "**V12 security review: skipped, nothing to review**\n\nV12 reports 0 billable changed lines for 2222222..1111111; nothing to review and nothing to charge.\n\n---\ncost n/a (estimate $12.50, usage billing) · 3 files in scope · 3 changed files · range `2222222..1111111`\n<sub>v12-action 1.0.0-test</sub>",
+  "annotations": [],
+  "annotationsTotal": 0
+}

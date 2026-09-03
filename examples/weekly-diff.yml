@@ -1,0 +1,31 @@
+# Weekly review of everything that landed on the default branch in the last
+# seven days. Silent (and free) when nothing landed. Costs one usage-billed
+# diff review per week otherwise.
+name: V12 weekly diff sweep
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  v12:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0 # required to resolve the time window
+          persist-credentials: false
+      - uses: metarsit/v12-action@v1
+        with:
+          v12-token: ${{ secrets.V12_TOKEN }}
+          mode: diff
+          since: '7 days ago'
+          max-cost-cents: 10000
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack-notify-on: findings

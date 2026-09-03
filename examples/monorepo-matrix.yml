@@ -1,0 +1,41 @@
+# One review per package of a monorepo, each with its own sticky comment.
+# V12 allows 20 run creations per user per hour (and 30 estimates), so keep
+# the matrix small or serialise it with max-parallel; a matrix of more than
+# 20 entries cannot complete within an hour with one token.
+name: V12 monorepo review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: v12-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  v12:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        package: [contracts, services/api, packages/crypto]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: metarsit/v12-action@v1
+        with:
+          v12-token: ${{ secrets.V12_TOKEN }}
+          paths: ${{ matrix.package }}/
+          comment-key: ${{ matrix.package }}
+          check-run-name: V12 Security (${{ matrix.package }})
+          sarif-category: v12-audit/${{ matrix.package }}

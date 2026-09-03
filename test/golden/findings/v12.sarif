@@ -1,0 +1,1060 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "V12",
+          "fullName": "V12 security audit (v12-action)",
+          "informationUri": "https://v12.sh",
+          "version": "1.0.0-test",
+          "semanticVersion": "1.0.0-test",
+          "rules": [
+            {
+              "id": "v12/critical/integer-overflow-in-reward-accounting-4dfc0e",
+              "name": "IntegerOverflowInRewardAccounting",
+              "shortDescription": {
+                "text": "Integer overflow in reward accounting"
+              },
+              "fullDescription": {
+                "text": "Auto-invalidated by V12's PoC run: Solidity 0.8 checked arithmetic prevents this."
+              },
+              "helpUri": "https://v12.sh/runs/42/103",
+              "help": {
+                "text": "Auto-invalidated by V12's PoC run: Solidity 0.8 checked arithmetic prevents this.\n\nImpact: None (auto-invalidated).\n\nRoot cause: Analysis assumed unchecked arithmetic.",
+                "markdown": "Auto-invalidated by V12's PoC run: Solidity 0.8 checked arithmetic prevents this.\n\n**Impact**\n\nNone (auto-invalidated).\n\n**Root cause**\n\nAnalysis assumed unchecked arithmetic.\n\n[View on V12](https://v12.sh/runs/42/103)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "critical",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "9.5"
+              }
+            },
+            {
+              "id": "v12/critical/reentrancy-in-withdraw-lets-a-caller-drain-the-v-4a96f6",
+              "name": "ReentrancyInWithdrawLetsACallerDrainTheVault",
+              "shortDescription": {
+                "text": "Reentrancy in withdraw() lets a caller drain the vault"
+              },
+              "fullDescription": {
+                "text": "`withdraw()` sends ETH with `call` before updating `balances[msg.sender]`, so a malicious receiver can re-enter and withdraw repeatedly."
+              },
+              "helpUri": "https://v12.sh/runs/42/101",
+              "help": {
+                "text": "`withdraw()` sends ETH with `call` before updating `balances[msg.sender]`, so a malicious receiver can re-enter and withdraw repeatedly.\n\nImpact: Complete loss of vault funds.\n\nRoot cause: State update happens after the external call (checks-effects-interactions violated).",
+                "markdown": "`withdraw()` sends ETH with `call` before updating `balances[msg.sender]`, so a malicious receiver can re-enter and withdraw repeatedly.\n\n**Impact**\n\nComplete loss of vault funds.\n\n**Root cause**\n\nState update happens after the external call (checks-effects-interactions violated).\n\n[View on V12](https://v12.sh/runs/42/101)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "critical",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "9.5"
+              }
+            },
+            {
+              "id": "v12/critical/signature-replay-across-chains-867eb1",
+              "name": "SignatureReplayAcrossChains",
+              "shortDescription": {
+                "text": "Signature replay across chains"
+              },
+              "fullDescription": {
+                "text": "The permit digest omits the chain id. A reviewer confirmed this despite the automatic invalidation."
+              },
+              "helpUri": "https://v12.sh/runs/42/104",
+              "help": {
+                "text": "The permit digest omits the chain id. A reviewer confirmed this despite the automatic invalidation.\n\nImpact: Signatures can be replayed on forks.\n\nRoot cause: EIP-712 domain separator without chainId.",
+                "markdown": "The permit digest omits the chain id. A reviewer confirmed this despite the automatic invalidation.\n\n**Impact**\n\nSignatures can be replayed on forks.\n\n**Root cause**\n\nEIP-712 domain separator without chainId.\n\n[View on V12](https://v12.sh/runs/42/104)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "critical",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "9.5"
+              }
+            },
+            {
+              "id": "v12/critical/unchecked-external-call-return-value-funds-stuck-362a87",
+              "name": "UncheckedExternalCallReturnValueFundsStuckInEscrow",
+              "shortDescription": {
+                "text": "Unchecked external call return value | funds stuck in escrow"
+              },
+              "fullDescription": {
+                "text": "The return value of `token.transfer` is ignored."
+              },
+              "helpUri": "https://v12.sh/runs/42/102",
+              "help": {
+                "text": "The return value of `token.transfer` is ignored.\n\nImpact: Tokens can be silently lost.\n\nRoot cause: Missing require on the boolean return value.",
+                "markdown": "The return value of `token.transfer` is ignored.\n\n**Impact**\n\nTokens can be silently lost.\n\n**Root cause**\n\nMissing require on the boolean return value.\n\n[View on V12](https://v12.sh/runs/42/102)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "critical",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "9.5"
+              }
+            },
+            {
+              "id": "v12/high/missing-access-control-on-setowner-3b09e7",
+              "name": "MissingAccessControlOnSetOwner",
+              "shortDescription": {
+                "text": "Missing access control on `setOwner`"
+              },
+              "fullDescription": {
+                "text": "No location could be attributed: the function is generated by a proxy pattern at deploy time."
+              },
+              "helpUri": "https://v12.sh/runs/42/108",
+              "help": {
+                "text": "No location could be attributed: the function is generated by a proxy pattern at deploy time.\n\nImpact: Anyone can take ownership.\n\nRoot cause: Generated setter lacks the onlyOwner modifier.",
+                "markdown": "No location could be attributed: the function is generated by a proxy pattern at deploy time.\n\n**Impact**\n\nAnyone can take ownership.\n\n**Root cause**\n\nGenerated setter lacks the onlyOwner modifier.\n\n[View on V12](https://v12.sh/runs/42/108)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "high",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "8.0"
+              }
+            },
+            {
+              "id": "v12/high/path-traversal-in-module-loader-227078",
+              "name": "PathTraversalInModuleLoader",
+              "shortDescription": {
+                "text": "Path traversal in module loader"
+              },
+              "fullDescription": {
+                "text": "User-controlled module names are joined to a base path without normalisation."
+              },
+              "helpUri": "https://v12.sh/runs/42/122",
+              "help": {
+                "text": "User-controlled module names are joined to a base path without normalisation.\n\nImpact: Arbitrary file read.\n\nRoot cause: Missing path normalisation.",
+                "markdown": "User-controlled module names are joined to a base path without normalisation.\n\n**Impact**\n\nArbitrary file read.\n\n**Root cause**\n\nMissing path normalisation.\n\n[View on V12](https://v12.sh/runs/42/122)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "high",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "8.0"
+              }
+            },
+            {
+              "id": "v12/high/script-alert-1-script-nonce-reuse-in-signing-rou-517ecf",
+              "name": "ScriptAlert1ScriptNonceReuseInSigningRoutine",
+              "shortDescription": {
+                "text": "<script>alert(1)</script> Nonce reuse in signing routine"
+              },
+              "fullDescription": {
+                "text": "Second instance of the same nonce derivation (duplicate fingerprint case)."
+              },
+              "helpUri": "https://v12.sh/runs/42/118",
+              "help": {
+                "text": "Second instance of the same nonce derivation (duplicate fingerprint case).\n\nImpact: Key recovery.\n\nRoot cause: Same as above.",
+                "markdown": "Second instance of the same nonce derivation (duplicate fingerprint case).\n\n**Impact**\n\nKey recovery.\n\n**Root cause**\n\nSame as above.\n\n[View on V12](https://v12.sh/runs/42/118)"
+              },
+              "defaultConfiguration": {
+                "level": "error"
+              },
+              "properties": {
+                "tags": [
+                  "high",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "8.0"
+              }
+            },
+            {
+              "id": "v12/info/event-missing-for-ownership-transfer-d45a13",
+              "name": "EventMissingForOwnershipTransfer",
+              "shortDescription": {
+                "text": "Event missing for ownership transfer"
+              },
+              "fullDescription": {
+                "text": "No event is emitted when ownership changes."
+              },
+              "helpUri": "https://v12.sh/runs/42/114",
+              "help": {
+                "text": "No event is emitted when ownership changes.\n\nImpact: Harder off-chain monitoring.\n\nRoot cause: Missing emit.",
+                "markdown": "No event is emitted when ownership changes.\n\n**Impact**\n\nHarder off-chain monitoring.\n\n**Root cause**\n\nMissing emit.\n\n[View on V12](https://v12.sh/runs/42/114)"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "tags": [
+                  "info",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "1.0"
+              }
+            },
+            {
+              "id": "v12/info/redundant-zero-address-check-1714c6",
+              "name": "RedundantZeroAddressCheck",
+              "shortDescription": {
+                "text": "Redundant zero-address check"
+              },
+              "fullDescription": {
+                "text": "Auto-invalidated: the check is not redundant after all."
+              },
+              "helpUri": "https://v12.sh/runs/42/124",
+              "help": {
+                "text": "Auto-invalidated: the check is not redundant after all.\n\nImpact: None.\n\nRoot cause: None.",
+                "markdown": "Auto-invalidated: the check is not redundant after all.\n\n**Impact**\n\nNone.\n\n**Root cause**\n\nNone.\n\n[View on V12](https://v12.sh/runs/42/124)"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "tags": [
+                  "info",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "1.0"
+              }
+            },
+            {
+              "id": "v12/low/floating-pragma-5a4fb5",
+              "name": "FloatingPragma",
+              "shortDescription": {
+                "text": "Floating pragma"
+              },
+              "fullDescription": {
+                "text": "pragma solidity ^0.8.0 allows compilation with future compilers."
+              },
+              "helpUri": "https://v12.sh/runs/42/113",
+              "help": {
+                "text": "pragma solidity ^0.8.0 allows compilation with future compilers.\n\nImpact: Unexpected compiler behaviour.\n\nRoot cause: Unpinned pragma.",
+                "markdown": "pragma solidity ^0.8.0 allows compilation with future compilers.\n\n**Impact**\n\nUnexpected compiler behaviour.\n\n**Root cause**\n\nUnpinned pragma.\n\n[View on V12](https://v12.sh/runs/42/113)"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "tags": [
+                  "low",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "2.5"
+              }
+            },
+            {
+              "id": "v12/low/rounding-favours-the-caller-in-share-math-06cf11",
+              "name": "RoundingFavoursTheCallerInShareMath",
+              "shortDescription": {
+                "text": "Rounding favours the caller in share math"
+              },
+              "fullDescription": {
+                "text": "Both deposit and redeem round in the caller's favour."
+              },
+              "helpUri": "https://v12.sh/runs/42/125",
+              "help": {
+                "text": "Both deposit and redeem round in the caller's favour.\n\nImpact: Slow value leak.\n\nRoot cause: Rounding direction.",
+                "markdown": "Both deposit and redeem round in the caller's favour.\n\n**Impact**\n\nSlow value leak.\n\n**Root cause**\n\nRounding direction.\n\n[View on V12](https://v12.sh/runs/42/125)"
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              },
+              "properties": {
+                "tags": [
+                  "low",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "2.5"
+              }
+            },
+            {
+              "id": "v12/medium/berpr-fung-fehlt-signature-malleability-93ba19",
+              "name": "BerprFungFehltSignatureMalleability",
+              "shortDescription": {
+                "text": "Überprüfung fehlt — signature malleability 🚨"
+              },
+              "fullDescription": {
+                "text": "ecrecover accepts high-s signatures."
+              },
+              "helpUri": "https://v12.sh/runs/42/111",
+              "help": {
+                "text": "ecrecover accepts high-s signatures.\n\nImpact: Replay with a malleated signature.\n\nRoot cause: No s-value bound check.",
+                "markdown": "ecrecover accepts high-s signatures.\n\n**Impact**\n\nReplay with a malleated signature.\n\n**Root cause**\n\nNo s-value bound check.\n\n[View on V12](https://v12.sh/runs/42/111)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "medium",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "5.5"
+              }
+            },
+            {
+              "id": "v12/medium/oracle-staleness-not-checked-728edf",
+              "name": "OracleStalenessNotChecked",
+              "shortDescription": {
+                "text": "Oracle staleness not checked"
+              },
+              "fullDescription": {
+                "text": "latestRoundData() is used without checking updatedAt."
+              },
+              "helpUri": "https://v12.sh/runs/42/119",
+              "help": {
+                "text": "latestRoundData() is used without checking updatedAt.\n\nImpact: Stale prices accepted.\n\nRoot cause: Missing freshness check.",
+                "markdown": "latestRoundData() is used without checking updatedAt.\n\n**Impact**\n\nStale prices accepted.\n\n**Root cause**\n\nMissing freshness check.\n\n[View on V12](https://v12.sh/runs/42/119)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "medium",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "5.5"
+              }
+            },
+            {
+              "id": "v12/medium/price-manipulation-through-flash-loaned-liquidit-0b63fa",
+              "name": "PriceManipulationThroughFlashLoanedLiquidity",
+              "shortDescription": {
+                "text": "Price manipulation through flash-loaned liquidity"
+              },
+              "fullDescription": {
+                "text": "# Not a heading\n\nThe spot price is read from the pool reserves in the same transaction.\n\n- reserves can be moved with a flash loan\n- the vault mints against the manipulated price\n\nSee <https://example.com/flash> and the `getPrice()` helper. Ends with an HTML comment terminator: -->"
+              },
+              "helpUri": "https://v12.sh/runs/42/123",
+              "help": {
+                "text": "# Not a heading\n\nThe spot price is read from the pool reserves in the same transaction.\n\n- reserves can be moved with a flash loan\n- the vault mints against the manipulated price\n\nSee <https://example.com/flash> and the `getPrice()` helper. Ends with an HTML comment terminator: -->\n\nImpact: Under-collateralised minting. **Bold** should render literally.\n\nRoot cause: Spot price used as oracle.",
+                "markdown": "# Not a heading\n\nThe spot price is read from the pool reserves in the same transaction.\n\n- reserves can be moved with a flash loan\n- the vault mints against the manipulated price\n\nSee <https://example.com/flash> and the `getPrice()` helper. Ends with an HTML comment terminator: -->\n\n**Impact**\n\nUnder-collateralised minting. **Bold** should render literally.\n\n**Root cause**\n\nSpot price used as oracle.\n\n[View on V12](https://v12.sh/runs/42/123)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "medium",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "5.5"
+              }
+            },
+            {
+              "id": "v12/medium/unbounded-loop-over-depositors-d26495",
+              "name": "UnboundedLoopOverDepositors",
+              "shortDescription": {
+                "text": "Unbounded loop over depositors"
+              },
+              "fullDescription": {
+                "text": "Auto-invalidated: the array is capped at 100 entries elsewhere."
+              },
+              "helpUri": "https://v12.sh/runs/42/110",
+              "help": {
+                "text": "Auto-invalidated: the array is capped at 100 entries elsewhere.\n\nImpact: Gas exhaustion.\n\nRoot cause: Unbounded iteration.",
+                "markdown": "Auto-invalidated: the array is capped at 100 entries elsewhere.\n\n**Impact**\n\nGas exhaustion.\n\n**Root cause**\n\nUnbounded iteration.\n\n[View on V12](https://v12.sh/runs/42/110)"
+              },
+              "defaultConfiguration": {
+                "level": "warning"
+              },
+              "properties": {
+                "tags": [
+                  "medium",
+                  "security",
+                  "v12"
+                ],
+                "security-severity": "5.5"
+              }
+            }
+          ]
+        }
+      },
+      "automationDetails": {
+        "id": "v12-audit/pr"
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "properties": {
+            "runUid": 42,
+            "runUrl": "https://v12.sh/runs/42",
+            "state": "completed",
+            "costCents": 1250,
+            "estimateCents": 1250,
+            "billingMode": "usage",
+            "totalFindings": 16,
+            "resultsIncluded": 16,
+            "truncated": false,
+            "suppressedOmitted": 1,
+            "fingerprintScheme": "sha256(v12-fp-v1, path, normalized title, whitespace-stripped snippet)[0:16]"
+          },
+          "endTimeUtc": "2026-04-26T18:27:30.000Z",
+          "startTimeUtc": "2026-04-26T18:15:00.000Z"
+        }
+      ],
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "https://github.com/acme/vault",
+          "revisionId": "1111111111111111111111111111111111111111",
+          "branch": "fix/withdraw"
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "v12/critical/signature-replay-across-chains-867eb1",
+          "ruleIndex": 2,
+          "level": "error",
+          "message": {
+            "text": "Signature replay across chains"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Permit.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 30,
+                  "endLine": 41
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "c9ecb9cf8cf93ea3:1",
+            "v12/fingerprint": "c9ecb9cf8cf93ea3"
+          },
+          "properties": {
+            "severity": "critical",
+            "validity": "valid",
+            "autoInvalidated": true,
+            "findingUid": 104,
+            "fingerprint": "c9ecb9cf8cf93ea3",
+            "webUrl": "https://v12.sh/runs/42/104",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/104"
+        },
+        {
+          "ruleId": "v12/critical/reentrancy-in-withdraw-lets-a-caller-drain-the-v-4a96f6",
+          "ruleIndex": 1,
+          "level": "error",
+          "message": {
+            "text": "Reentrancy in withdraw() lets a caller drain the vault"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Vault.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 118,
+                  "endLine": 121
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "03fd1caea09bb909:1",
+            "v12/fingerprint": "03fd1caea09bb909"
+          },
+          "properties": {
+            "severity": "critical",
+            "validity": "valid",
+            "autoInvalidated": false,
+            "findingUid": 101,
+            "fingerprint": "03fd1caea09bb909",
+            "webUrl": "https://v12.sh/runs/42/101",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/101"
+        },
+        {
+          "ruleId": "v12/critical/integer-overflow-in-reward-accounting-4dfc0e",
+          "ruleIndex": 0,
+          "level": "error",
+          "message": {
+            "text": "Integer overflow in reward accounting"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Rewards.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 55,
+                  "endLine": 57
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "d8c8bf0ce16a1089:1",
+            "v12/fingerprint": "d8c8bf0ce16a1089"
+          },
+          "properties": {
+            "severity": "critical",
+            "validity": "unreviewed",
+            "autoInvalidated": true,
+            "findingUid": 103,
+            "fingerprint": "d8c8bf0ce16a1089",
+            "webUrl": "https://v12.sh/runs/42/103",
+            "inDiff": false,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/103"
+        },
+        {
+          "ruleId": "v12/critical/unchecked-external-call-return-value-funds-stuck-362a87",
+          "ruleIndex": 3,
+          "level": "error",
+          "message": {
+            "text": "Unchecked external call return value | funds stuck in escrow"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Vault.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 200,
+                  "endLine": 200
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "75001bd88146f0dc:1",
+            "v12/fingerprint": "75001bd88146f0dc"
+          },
+          "properties": {
+            "severity": "critical",
+            "validity": "unreviewed",
+            "autoInvalidated": false,
+            "findingUid": 102,
+            "fingerprint": "75001bd88146f0dc",
+            "webUrl": "https://v12.sh/runs/42/102",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/102"
+        },
+        {
+          "ruleId": "v12/high/script-alert-1-script-nonce-reuse-in-signing-rou-517ecf",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "<script>alert(1)</script> Nonce reuse in signing routine"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/crypto/sign.rs",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 90,
+                  "endLine": 105
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "76e409073bcd488c:1",
+            "v12/fingerprint": "76e409073bcd488c"
+          },
+          "properties": {
+            "severity": "high",
+            "validity": "valid",
+            "autoInvalidated": false,
+            "findingUid": 118,
+            "fingerprint": "76e409073bcd488c",
+            "webUrl": "https://v12.sh/runs/42/118",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/118"
+        },
+        {
+          "ruleId": "v12/high/missing-access-control-on-setowner-3b09e7",
+          "ruleIndex": 4,
+          "level": "error",
+          "message": {
+            "text": "Missing access control on `setOwner` (V12 reported no source location; anchored to .github/workflows/v12.yml)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": ".github/workflows/v12.yml",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 1
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "ca54c1231dd564f3:1",
+            "v12/fingerprint": "ca54c1231dd564f3"
+          },
+          "properties": {
+            "severity": "high",
+            "validity": "unreviewed",
+            "autoInvalidated": false,
+            "findingUid": 108,
+            "fingerprint": "ca54c1231dd564f3",
+            "webUrl": "https://v12.sh/runs/42/108",
+            "inDiff": false,
+            "hasSourceLocation": false
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/108"
+        },
+        {
+          "ruleId": "v12/high/script-alert-1-script-nonce-reuse-in-signing-rou-517ecf",
+          "ruleIndex": 6,
+          "level": "error",
+          "message": {
+            "text": "<script>alert(1)</script> Nonce reuse in signing routine"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/crypto/sign.rs",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 40,
+                  "endLine": 55
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "76e409073bcd488c:2",
+            "v12/fingerprint": "76e409073bcd488c"
+          },
+          "properties": {
+            "severity": "high",
+            "validity": "unreviewed",
+            "autoInvalidated": false,
+            "findingUid": 105,
+            "fingerprint": "76e409073bcd488c",
+            "webUrl": "https://v12.sh/runs/42/105",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/105"
+        },
+        {
+          "ruleId": "v12/high/path-traversal-in-module-loader-227078",
+          "ruleIndex": 5,
+          "level": "error",
+          "message": {
+            "text": "Path traversal in module loader"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/módulo/file name.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 7,
+                  "endLine": 9
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "726c9cf20e4e84bd:1",
+            "v12/fingerprint": "726c9cf20e4e84bd"
+          },
+          "properties": {
+            "severity": "high",
+            "validity": "unreviewed",
+            "autoInvalidated": false,
+            "findingUid": 122,
+            "fingerprint": "726c9cf20e4e84bd",
+            "webUrl": "https://v12.sh/runs/42/122",
+            "inDiff": false,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/122"
+        },
+        {
+          "ruleId": "v12/medium/price-manipulation-through-flash-loaned-liquidit-0b63fa",
+          "ruleIndex": 13,
+          "level": "warning",
+          "message": {
+            "text": "Price manipulation through flash-loaned liquidity"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Vault.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 250,
+                  "endLine": 262
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "44d3f84c9ccf8d87:1",
+            "v12/fingerprint": "44d3f84c9ccf8d87"
+          },
+          "properties": {
+            "severity": "medium",
+            "validity": "valid",
+            "autoInvalidated": false,
+            "findingUid": 123,
+            "fingerprint": "44d3f84c9ccf8d87",
+            "webUrl": "https://v12.sh/runs/42/123",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/123"
+        },
+        {
+          "ruleId": "v12/medium/oracle-staleness-not-checked-728edf",
+          "ruleIndex": 12,
+          "level": "warning",
+          "message": {
+            "text": "Oracle staleness not checked"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Oracle.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 44,
+                  "endLine": 44
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "6bf6cb80de410fab:1",
+            "v12/fingerprint": "6bf6cb80de410fab"
+          },
+          "properties": {
+            "severity": "medium",
+            "validity": "unreviewed",
+            "autoInvalidated": false,
+            "findingUid": 119,
+            "fingerprint": "6bf6cb80de410fab",
+            "webUrl": "https://v12.sh/runs/42/119",
+            "inDiff": false,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/119"
+        },
+        {
+          "ruleId": "v12/medium/berpr-fung-fehlt-signature-malleability-93ba19",
+          "ruleIndex": 11,
+          "level": "warning",
+          "message": {
+            "text": "Überprüfung fehlt — signature malleability 🚨"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Permit.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 70,
+                  "endLine": 72
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "f13a7794ac00ef21:1",
+            "v12/fingerprint": "f13a7794ac00ef21"
+          },
+          "properties": {
+            "severity": "medium",
+            "validity": "unreviewed",
+            "autoInvalidated": false,
+            "findingUid": 111,
+            "fingerprint": "f13a7794ac00ef21",
+            "webUrl": "https://v12.sh/runs/42/111",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/111"
+        },
+        {
+          "ruleId": "v12/medium/unbounded-loop-over-depositors-d26495",
+          "ruleIndex": 14,
+          "level": "warning",
+          "message": {
+            "text": "Unbounded loop over depositors"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Vault.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 300,
+                  "endLine": 310
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "e0c83f9665503f0a:1",
+            "v12/fingerprint": "e0c83f9665503f0a"
+          },
+          "properties": {
+            "severity": "medium",
+            "validity": "unreviewed",
+            "autoInvalidated": true,
+            "findingUid": 110,
+            "fingerprint": "e0c83f9665503f0a",
+            "webUrl": "https://v12.sh/runs/42/110",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/110"
+        },
+        {
+          "ruleId": "v12/low/floating-pragma-5a4fb5",
+          "ruleIndex": 9,
+          "level": "note",
+          "message": {
+            "text": "Floating pragma"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Vault.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 2,
+                  "endLine": 2
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "c489c926ca7979b7:1",
+            "v12/fingerprint": "c489c926ca7979b7"
+          },
+          "properties": {
+            "severity": "low",
+            "validity": "unreviewed",
+            "autoInvalidated": false,
+            "findingUid": 113,
+            "fingerprint": "c489c926ca7979b7",
+            "webUrl": "https://v12.sh/runs/42/113",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/113"
+        },
+        {
+          "ruleId": "v12/low/rounding-favours-the-caller-in-share-math-06cf11",
+          "ruleIndex": 10,
+          "level": "note",
+          "message": {
+            "text": "Rounding favours the caller in share math"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Vault.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 140,
+                  "endLine": 142
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "c40df8f19d04fda8:1",
+            "v12/fingerprint": "c40df8f19d04fda8"
+          },
+          "properties": {
+            "severity": "low",
+            "validity": "unreviewed",
+            "autoInvalidated": false,
+            "findingUid": 125,
+            "fingerprint": "c40df8f19d04fda8",
+            "webUrl": "https://v12.sh/runs/42/125",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/125"
+        },
+        {
+          "ruleId": "v12/info/event-missing-for-ownership-transfer-d45a13",
+          "ruleIndex": 7,
+          "level": "note",
+          "message": {
+            "text": "Event missing for ownership transfer"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Ownable.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 20,
+                  "endLine": 22
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "2b1e12b62d22fe0a:1",
+            "v12/fingerprint": "2b1e12b62d22fe0a"
+          },
+          "properties": {
+            "severity": "info",
+            "validity": "unreviewed",
+            "autoInvalidated": false,
+            "findingUid": 114,
+            "fingerprint": "2b1e12b62d22fe0a",
+            "webUrl": "https://v12.sh/runs/42/114",
+            "inDiff": false,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/114"
+        },
+        {
+          "ruleId": "v12/info/redundant-zero-address-check-1714c6",
+          "ruleIndex": 8,
+          "level": "note",
+          "message": {
+            "text": "Redundant zero-address check"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "contracts/Vault.sol",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "startLine": 80,
+                  "endLine": 80
+                }
+              }
+            }
+          ],
+          "partialFingerprints": {
+            "primaryLocationLineHash": "130eaf066b1505ce:1",
+            "v12/fingerprint": "130eaf066b1505ce"
+          },
+          "properties": {
+            "severity": "info",
+            "validity": "unreviewed",
+            "autoInvalidated": true,
+            "findingUid": 124,
+            "fingerprint": "130eaf066b1505ce",
+            "webUrl": "https://v12.sh/runs/42/124",
+            "inDiff": true,
+            "hasSourceLocation": true
+          },
+          "hostedViewerUri": "https://v12.sh/runs/42/124"
+        }
+      ],
+      "properties": {
+        "mode": "pr",
+        "kind": "diff",
+        "gate": {
+          "failOn": "high",
+          "count": 8,
+          "failing": true,
+          "findingUids": [
+            104,
+            101,
+            103,
+            102,
+            118,
+            108,
+            105,
+            122
+          ]
+        },
+        "counts": {
+          "critical": 4,
+          "high": 4,
+          "medium": 4,
+          "low": 2,
+          "info": 2,
+          "qa": 0,
+          "total": 16
+        }
+      }
+    }
+  ]
+}

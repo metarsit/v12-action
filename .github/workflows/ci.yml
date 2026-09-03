@@ -1,0 +1,212 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  JQ_16_SHA256: af986793a515d500ab2d35f8d2aecd656e764504b789b66d7e1a0b727a124c44
+  JQ_17_SHA256: 5942c9b0934e510ee61eb3e30273f1b3fe2590df93933a93d7c58b81d19c8ff5
+
+jobs:
+  lint:
+    name: Lint and static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install linters
+        # zizmor: ignore[adhoc-packages] versions are pinned; no lockfile exists for CLI tools
+        run: |
+          set -euo pipefail
+          pip install --quiet "yamllint==1.35.1" "codespell==2.3.0" "check-jsonschema==0.31.0" "jsonschema==4.23.0" "pyyaml==6.0.2"
+          go install mvdan.cc/sh/v3/cmd/shfmt@v3.10.0
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+          shellcheck --version | head -2
+      - name: shellcheck (zero warnings at style level)
+        run: shellcheck -x -S style scripts/*.sh scripts/dev/*.sh test/*.sh test/test_helper.bash
+      - name: shfmt
+        run: shfmt -d scripts/*.sh scripts/dev/*.sh test/*.sh test/test_helper.bash
+      - name: bash 3.2 floor
+        run: bash test/lint-bash32.sh
+      - name: actionlint (workflows and examples)
+        # examples/v12-audit.yml is the config file example, not a workflow
+        run: |
+          set -euo pipefail
+          files=(.github/workflows/*.yml)
+          for f in examples/*.yml; do
+            [ "$f" = examples/v12-audit.yml ] || files+=("$f")
+          done
+          actionlint "${files[@]}"
+      - name: No expressions in run bodies, pinned uses, example versions, job hygiene
+        run: bash test/lint-workflows.sh
+      - name: Inputs consumed both ways
+        run: bash test/lint-inputs.sh
+      - name: Branding icon and color
+        run: bash test/lint-branding.sh
+      - name: action.yml against the action metadata schema
+        run: check-jsonschema --builtin-schema vendor.github-actions action.yml
+      - name: Config schema is valid and the example validates
+        run: |
+          set -euo pipefail
+          check-jsonschema --check-metaschema schema/v12-audit.schema.json
+          check-jsonschema --schemafile schema/v12-audit.schema.json examples/v12-audit.yml
+      - name: yamllint
+        run: yamllint -c .yamllint.yml .
+      - name: codespell
+        run: codespell
+
+  zizmor:
+    name: zizmor (Actions security)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: zizmorcore/zizmor-action@a16621b09c6db4281f81a93cb393b05dcd7b7165 # v0.5.5
+        with:
+          min-severity: low
+          advanced-security: true
+
+  drift:
+    name: Drift checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: README input/output tables match action.yml
+        run: bash scripts/dev/gen-docs.sh --check
+      - name: Examples reference the current major version
+        run: bash test/lint-workflows.sh
+      - name: CHANGELOG touched on feature/fix pull requests
+        if: >-
+          github.event_name == 'pull_request'
+          && (contains(github.event.pull_request.labels.*.name, 'feature')
+              || contains(github.event.pull_request.labels.*.name, 'fix'))
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- CHANGELOG.md; then
+            echo "::error::This pull request is labelled feature or fix but does not touch CHANGELOG.md"
+            exit 1
+          fi
+
+  test:
+    name: Tests (${{ matrix.os }}, jq ${{ matrix.jq }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            jq: '1.7'
+          - os: ubuntu-latest
+            jq: '1.6'
+          - os: ubuntu-22.04
+            jq: '1.6'
+          - os: macos-latest
+            jq: system
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Install a pinned jq (Linux)
+        if: matrix.jq != 'system'
+        env:
+          JQ_VERSION: ${{ matrix.jq }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          case "$JQ_VERSION" in
+            1.6) url="https://github.com/jqlang/jq/releases/download/jq-1.6/jq-linux64"; sum="$JQ_16_SHA256" ;;
+            1.7) url="https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64"; sum="$JQ_17_SHA256" ;;
+            *) echo "unknown jq version $JQ_VERSION"; exit 1 ;;
+          esac
+          curl -fsSL -o "$HOME/.local/bin/jq" "$url"
+          echo "$sum  $HOME/.local/bin/jq" | sha256sum -c -
+          chmod +x "$HOME/.local/bin/jq"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install bats (pinned tag, no package manager)
+        run: |
+          set -euo pipefail
+          git clone --quiet --depth 1 --branch v1.11.1 https://github.com/bats-core/bats-core.git "$RUNNER_TEMP/bats-core"
+          echo "$RUNNER_TEMP/bats-core/bin" >> "$GITHUB_PATH"
+      - name: Install jsonschema for the SARIF schema test (best effort)
+        # zizmor: ignore[adhoc-packages] version is pinned; the test skips itself when the module is absent
+        run: |
+          python3 -m pip install --quiet "jsonschema==4.23.0" \
+            || python3 -m pip install --quiet --user --break-system-packages "jsonschema==4.23.0" \
+            || echo "::notice::jsonschema not installed; the SARIF schema test will be skipped on this runner"
+      - name: Tool versions
+        run: |
+          jq --version; yq --version; bats --version; node --version; bash --version | head -1
+      - name: bats suites (offline stub API)
+        run: make test-bats
+      - name: Node tests
+        run: make test-js
+
+  gitleaks:
+    name: Secret scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_ENABLE_COMMENTS: 'false'
+          GITLEAKS_ENABLE_SUMMARY: 'true'
+
+  links:
+    name: Markdown links
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: lycheeverse/lychee-action@885c65f3dc543b57c898c8099f4e08c8afd178a2 # v2.6.1
+        with:
+          args: >-
+            --no-progress --accept 200..=206,403,429
+            --exclude 'https://github.com/your-org/' --exclude 'https://v12.sh/runs/'
+            --exclude 'https://github.com/marketplace/' --exclude 'hooks.slack.com'
+            --exclude 'raw.githubusercontent.com/metarsit/v12-action/v1'
+            README.md SECURITY.md CONTRIBUTING.md AGENTS.md CHANGELOG.md docs/ examples/ skills/
+          fail: true

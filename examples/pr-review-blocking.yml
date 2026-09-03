@@ -1,0 +1,34 @@
+# Same as pr-review.yml, but the job fails when a critical finding survives
+# the validity filter. Make the check required in branch protection only
+# after the team has used the informative mode for a while.
+name: V12 security review (blocking on critical)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: v12-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  v12:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: metarsit/v12-action@v1
+        with:
+          v12-token: ${{ secrets.V12_TOKEN }}
+          fail-on: critical
+          include-validity: valid,unreviewed
+          max-cost-cents: 5000 # never spend more than $50 on one review

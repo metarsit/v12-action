@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "V12",
+          "fullName": "V12 security audit (v12-action)",
+          "informationUri": "https://v12.sh",
+          "version": "1.0.0-test",
+          "semanticVersion": "1.0.0-test",
+          "rules": []
+        }
+      },
+      "automationDetails": {
+        "id": "v12-audit/pr"
+      },
+      "invocations": [
+        {
+          "executionSuccessful": false,
+          "properties": {
+            "runUid": null,
+            "runUrl": null,
+            "state": "not-created",
+            "costCents": null,
+            "estimateCents": 1250,
+            "billingMode": "usage",
+            "totalFindings": 0,
+            "resultsIncluded": 0,
+            "truncated": false,
+            "suppressedOmitted": 0,
+            "fingerprintScheme": "sha256(v12-fp-v1, path, normalized title, whitespace-stripped snippet)[0:16]"
+          }
+        }
+      ],
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "https://github.com/acme/empty",
+          "revisionId": "1111111111111111111111111111111111111111",
+          "branch": "fix/withdraw"
+        }
+      ],
+      "results": [],
+      "properties": {
+        "mode": "pr",
+        "kind": "diff",
+        "gate": {
+          "failOn": "none",
+          "count": 0,
+          "failing": false,
+          "findingUids": []
+        },
+        "counts": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "info": 0,
+          "qa": 0,
+          "total": 0
+        }
+      }
+    }
+  ]
+}

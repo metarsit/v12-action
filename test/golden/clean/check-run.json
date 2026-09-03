@@ -1,0 +1,10 @@
+{
+  "name": "V12 Security",
+  "headSha": "1111111111111111111111111111111111111111",
+  "conclusion": "success",
+  "detailsUrl": "https://v12.sh/runs/49",
+  "title": "V12 security review: no findings",
+  "summary": "**V12 security review: no findings** · gate passing (fail-on: high, none at or above) · [View run](https://v12.sh/runs/49)\n\n| Severity | Count |\n|---|---:|\n| Critical | 0 |\n| High | 0 |\n| Medium | 0 |\n| Low | 0 |\n| Info | 0 |\n\n---\nduration 12m 30s · cost $12.50 (estimate $12.50, usage billing) · 3 files in scope · 3 changed files · range `2222222..1111111` · [full run](https://v12.sh/runs/49)\n<sub>v12-action 1.0.0-test</sub>",
+  "annotations": [],
+  "annotationsTotal": 0
+}

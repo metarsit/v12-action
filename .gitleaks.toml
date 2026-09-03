@@ -1,0 +1,19 @@
+# gitleaks configuration for v12-action.
+# The test suite uses obviously fake credentials (v12p_ok, xoxb-good, ...)
+# to select stub-API scenarios; they are not secrets.
+title = "v12-action"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "test fixtures and stub scenarios"
+paths = [
+  '''^test/''',
+  '''^docs/api-reconciliation\.md$''',
+]
+regexes = [
+  '''v12p_(ok|bad|readonly|ratelimit|flaky|retryafter|secret123|x|short)''',
+  '''v12a_short''',
+  '''xoxb-(good|bad|1|secret-1)''',
+]

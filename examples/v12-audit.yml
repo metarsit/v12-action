@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/metarsit/v12-action/v1/schema/v12-audit.schema.json
+#
+# Repository defaults for v12-action. Copy to .github/v12-audit.yml.
+# Action inputs set in a workflow override anything here.
+
+defaults:
+  fail-on: high                       # none | critical | high | medium | low | info | qa
+  include-validity: [valid, unreviewed]
+  ignore-auto-invalidated: false      # drop V12-auto-invalidated findings while unreviewed
+  min-severity: info                  # qa findings stay hidden unless this is qa
+  max-cost-cents: 5000                # abort before creating a run quoted above $50.00
+  wait-timeout-minutes: 60
+  hide-comment-when-clean: false
+
+paths:
+  include: ['contracts/**', 'src/crypto/**']   # sent to V12 as prefixes; narrows cost
+  exclude: ['**/test/**', '**/mocks/**']       # hides findings; does not reduce cost
+
+# V12 context document UIDs (`v12 context list`), attached to every run.
+context-documents:
+  - 0197b7e2-72cd-7bb0-b1c6-6f2ae65a2e6d
+
+# Every suppression expires. The fingerprint is printed in each finding's
+# details block in the pull request comment and job summary.
+suppressions:
+  - fingerprint: 'a1b2c3d4e5f60718'
+    reason: 'Mitigated by the upstream rate limiter, see SEC-412'
+    expires: '2026-12-31'
+    approved-by: '@security-team'
+
+notifications:
+  slack:
+    notify-on: gate-failure           # always | findings | gate-failure | never
+    mention-on-critical: '<!subteam^S0123456>'
+    thread: true
+    include-snippets: false

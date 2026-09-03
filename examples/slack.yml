@@ -1,0 +1,37 @@
+# Pull request review routed to Slack with a bot token: the message is
+# updated in place on every push and later runs reply in its thread, and
+# the security team is mentioned on critical findings. Findings link out;
+# descriptions and snippets stay out of Slack unless you opt in.
+name: V12 review with Slack
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: v12-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  v12:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: metarsit/v12-action@v1
+        with:
+          v12-token: ${{ secrets.V12_TOKEN }}
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }} # needs chat:write, invited to the channel
+          slack-channel: C0123456789
+          slack-notify-on: findings
+          slack-mention-on-critical: '<!subteam^S0123456789>'
+          slack-thread: true

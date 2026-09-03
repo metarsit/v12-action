@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-26T18:30:00Z",
+  "actionVersion": "test",
+  "skipped": null,
+  "run": {
+    "uid": 43,
+    "url": "https://v12.sh/runs/43",
+    "state": "failed",
+    "v12State": "failed",
+    "statusMessage": "Worker crashed while cloning the repository",
+    "name": "PR #12 Fix withdraw | reentrancy",
+    "startedAt": "2026-04-26T18:15:00.000Z",
+    "endedAt": "2026-04-26T18:27:30.000Z",
+    "durationSeconds": 750,
+    "costCents": 0
+  },
+  "estimate": {
+    "quoteCents": 1250,
+    "createQuoteCents": 1250,
+    "billingMode": "usage",
+    "scopeFiles": 3,
+    "billableChangedLines": 37
+  },
+  "target": {
+    "mode": "pr",
+    "kind": "diff",
+    "repository": "acme/failing",
+    "serverUrl": "https://github.com",
+    "fromSha": "2222222222222222222222222222222222222222",
+    "toSha": "1111111111111111111111111111111111111111",
+    "branch": "fix/withdraw",
+    "sha": null,
+    "blobSha": "1111111111111111111111111111111111111111",
+    "displayRange": "2222222..1111111",
+    "since": null,
+    "mergeBaseNote": null,
+    "pr": {
+      "number": 12,
+      "url": "https://github.com/acme/vault/pull/12",
+      "title": "Fix withdraw | reentrancy",
+      "draft": false,
+      "headSha": "1111111111111111111111111111111111111111",
+      "baseSha": "2222222222222222222222222222222222222222",
+      "headRef": "fix/withdraw",
+      "baseRef": "main",
+      "headRepo": "acme/failing",
+      "baseRepo": "acme/failing",
+      "isFork": false
+    },
+    "commentPrNumber": 12,
+    "shallow": {
+      "was": false,
+      "unshallowed": false
+    },
+    "changedFiles": 3,
+    "changedFilesTotal": 3
+  },
+  "filters": {
+    "includeValidity": [
+      "valid",
+      "unreviewed"
+    ],
+    "ignoreAutoInvalidated": false,
+    "minSeverity": "info",
+    "failOn": "high",
+    "paths": [],
+    "excludePaths": [],
+    "failOnError": false
+  },
+  "counts": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0,
+    "qa": 0,
+    "total": 0
+  },
+  "hidden": {
+    "validity": 0,
+    "autoInvalidated": 0,
+    "belowMinSeverity": 0,
+    "excludedPath": 0,
+    "total": 0
+  },
+  "totals": {
+    "fetched": 0,
+    "totalMatching": 0
+  },
+  "detail": {
+    "needed": false,
+    "fetched": 0,
+    "capped": false,
+    "cap": 200
+  },
+  "findings": [],
+  "suppressed": [],
+  "expiredSuppressions": [],
+  "unmatchedSuppressions": [],
+  "gate": {
+    "failOn": "high",
+    "count": 0,
+    "failing": false,
+    "findingUids": []
+  },
+  "delta": null,
+  "conclusion": "failure",
+  "jobShouldFail": false
+}
