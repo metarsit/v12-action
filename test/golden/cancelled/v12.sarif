@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "V12",
+          "fullName": "V12 security audit (v12-action)",
+          "informationUri": "https://v12.sh",
+          "version": "1.0.0-test",
+          "semanticVersion": "1.0.0-test",
+          "rules": []
+        }
+      },
+      "automationDetails": {
+        "id": "v12-audit/pr"
+      },
+      "invocations": [
+        {
+          "executionSuccessful": false,
+          "properties": {
+            "runUid": 44,
+            "runUrl": "https://v12.sh/runs/44",
+            "state": "cancelled",
+            "costCents": null,
+            "estimateCents": 1250,
+            "billingMode": "usage",
+            "totalFindings": 0,
+            "resultsIncluded": 0,
+            "truncated": false,
+            "suppressedOmitted": 0,
+            "fingerprintScheme": "sha256(v12-fp-v1, path, normalized title, whitespace-stripped snippet)[0:16]"
+          },
+          "endTimeUtc": "2026-04-26T18:30:00.000Z",
+          "startTimeUtc": "2026-04-26T18:15:00.000Z"
+        }
+      ],
+      "versionControlProvenance": [
+        {
+          "repositoryUri": "https://github.com/acme/cancelling",
+          "revisionId": "1111111111111111111111111111111111111111",
+          "branch": "fix/withdraw"
+        }
+      ],
+      "results": [],
+      "properties": {
+        "mode": "pr",
+        "kind": "diff",
+        "gate": {
+          "failOn": "none",
+          "count": 0,
+          "failing": false,
+          "findingUids": []
+        },
+        "counts": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 0,
+          "info": 0,
+          "qa": 0,
+          "total": 0
+        }
+      }
+    }
+  ]
+}

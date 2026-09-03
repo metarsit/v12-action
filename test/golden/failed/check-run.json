@@ -1,0 +1,10 @@
+{
+  "name": "V12 Security",
+  "headSha": "1111111111111111111111111111111111111111",
+  "conclusion": "neutral",
+  "detailsUrl": "https://v12.sh/runs/43",
+  "title": "V12 security review: failed",
+  "summary": "**V12 security review: failed** · [View run](https://v12.sh/runs/43)\n\nThe V12 run ended in state `failed`: Worker crashed while cloning the repository. No findings were collected.\n\n---\nduration 12m 30s · cost $0.00 (estimate $12.50, usage billing) · 3 files in scope · 3 changed files · range `2222222..1111111` · [full run](https://v12.sh/runs/43)\n<sub>v12-action 1.0.0-test</sub>",
+  "annotations": [],
+  "annotationsTotal": 0
+}

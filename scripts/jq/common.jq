@@ -135,7 +135,9 @@ def norm_title:
   | unique
   | join(" ");
 
-def title_slug: norm_title | gsub("[^a-z0-9]+"; "-") | .[0:48] | sub("-+$"; "") | if length == 0 then "finding" else . end;
+# Readable slug in the title's own word order (the rule id also carries a
+# hash of the normalised title, so the slug is cosmetic).
+def title_slug: str | ascii_downcase | [scan("[a-z0-9]+")] | join("-") | .[0:48] | sub("-+$"; "") | if length == 0 then "finding" else . end;
 
 # Material hashed (in bash, with sha256) into the 16-hex fingerprint.
 def fingerprint_material:
@@ -160,13 +162,13 @@ def sort_findings:
 # Literal text for a Markdown table cell: HTML-escaped, no pipes, no
 # newlines, no accidental emphasis or code spans.
 def md_cell:
-  str | @html
+  str | @html | gsub("&apos;"; "&#39;")
   | gsub("\\|"; "&#124;") | gsub("`"; "&#96;") | gsub("\\*"; "&#42;") | gsub("_"; "&#95;")
   | gsub("\\["; "&#91;") | gsub("\\]"; "&#93;") | gsub("~"; "&#126;") | gsub("\r?\n"; " ");
 
 # Literal text for Markdown prose (newlines kept).
 def md_text:
-  str | @html | gsub("`"; "&#96;") | gsub("\\*"; "&#42;") | gsub("_"; "&#95;")
+  str | @html | gsub("&apos;"; "&#39;") | gsub("`"; "&#96;") | gsub("\\*"; "&#42;") | gsub("_"; "&#95;")
   | gsub("\\["; "&#91;") | gsub("\\]"; "&#93;") | gsub("~"; "&#126;") | gsub("(?<h>^|\n)#"; "\(.h)&#35;");
 
 # A backtick fence longer than any run of backticks in the content.
