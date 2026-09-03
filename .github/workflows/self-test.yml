@@ -28,11 +28,18 @@ jobs:
     permissions:
       contents: read
       checks: write
+    env:
+      HAS_V12_TOKEN: ${{ secrets.V12_TOKEN != '' }}
     steps:
+      - name: Token not configured
+        if: env.HAS_V12_TOKEN != 'true'
+        run: echo "::notice::The V12_TOKEN secret is not set on this repository; skipping the self-test."
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        if: env.HAS_V12_TOKEN == 'true'
         with:
           persist-credentials: false
       - uses: ./ # zizmor: ignore[self-repository] the ./ form is understood by every runner version
+        if: env.HAS_V12_TOKEN == 'true'
         id: audit
         with:
           v12-token: ${{ secrets.V12_TOKEN }}
@@ -44,6 +51,7 @@ jobs:
           check-run-name: V12 self-test
           fail-on: none
       - name: Assert the run completed and reported
+        if: env.HAS_V12_TOKEN == 'true'
         env:
           STATE: ${{ steps.audit.outputs.state }}
           CONCLUSION: ${{ steps.audit.outputs.conclusion }}

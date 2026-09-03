@@ -205,18 +205,26 @@ jobs:
 
   smoke:
     # Real auth and the real estimate path for near-zero cost. Skipped on
-    # pull requests from forks (no secrets) and when the token is absent.
+    # pull requests from forks (no secrets) and, with a notice, when the
+    # V12_TOKEN secret has not been configured on the repository.
     name: estimate-only smoke test (real V12 API)
     if: github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: read
+    env:
+      HAS_V12_TOKEN: ${{ secrets.V12_TOKEN != '' }}
     steps:
+      - name: Token not configured
+        if: env.HAS_V12_TOKEN != 'true'
+        run: echo "::notice::The V12_TOKEN secret is not set on this repository; skipping the estimate-only smoke test."
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        if: env.HAS_V12_TOKEN == 'true'
         with:
           persist-credentials: false
       - uses: ./ # zizmor: ignore[self-repository] the ./ form is understood by every runner version
+        if: env.HAS_V12_TOKEN == 'true'
         id: quote
         with:
           v12-token: ${{ secrets.V12_TOKEN }}
@@ -226,6 +234,7 @@ jobs:
           comment: false
           check-run: false
       - name: The quote came back
+        if: env.HAS_V12_TOKEN == 'true'
         env:
           CENTS: ${{ steps.quote.outputs.estimate-cents }}
           REASON: ${{ steps.quote.outputs.skipped-reason }}
