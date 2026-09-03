@@ -1,0 +1,276 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/metarsit/v12-action/v1/schema/v12-audit.schema.json",
+  "title": "v12-action repository configuration (.github/v12-audit.yml)",
+  "description": "Repository-level defaults for the v12-action GitHub Action. Action inputs set in the workflow override values from this file.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "defaults": {
+      "type": "object",
+      "description": "Default values for action inputs. A non-empty action input wins over the value here.",
+      "additionalProperties": false,
+      "properties": {
+        "fail-on": {
+          "description": "Fail the job when a finding at this severity or above survives filtering. `none` never fails the job.",
+          "type": "string",
+          "enum": [
+            "none",
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "info",
+            "qa"
+          ],
+          "default": "none"
+        },
+        "include-validity": {
+          "description": "Validity states that count as findings. Anything else is dropped before gating and reporting.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "valid",
+              "unreviewed",
+              "acknowledged",
+              "invalid"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "default": [
+            "valid",
+            "unreviewed"
+          ]
+        },
+        "ignore-auto-invalidated": {
+          "description": "Drop findings that V12's own triage rejected (autoInvalidated) while they are still unreviewed. A reviewer's explicit validity always wins over the machine verdict.",
+          "type": "boolean",
+          "default": false
+        },
+        "max-cost-cents": {
+          "description": "Abort before creating a run when the V12 estimate exceeds this many US cents.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "min-severity": {
+          "description": "Lowest severity shown on any surface. `qa` findings are hidden unless this is set to `qa`.",
+          "type": "string",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "info",
+            "qa"
+          ],
+          "default": "info"
+        },
+        "hide-comment-when-clean": {
+          "description": "Do not leave a pull request comment when no findings survive filtering (an existing comment is removed).",
+          "type": "boolean",
+          "default": false
+        },
+        "wait": {
+          "description": "Wait for the run to reach a terminal state. When false the job ends as soon as the run is created.",
+          "type": "boolean",
+          "default": true
+        },
+        "wait-timeout-minutes": {
+          "description": "How long to wait for the run before giving up. The run keeps going on V12's side; the job exits 0.",
+          "type": "integer",
+          "minimum": 1,
+          "default": 60
+        },
+        "poll-interval-seconds": {
+          "description": "Seconds between run status polls.",
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 3600,
+          "default": 15
+        },
+        "skip-if-unchanged": {
+          "description": "Skip diff reviews whose range contains no changes (after path filters).",
+          "type": "boolean",
+          "default": true
+        },
+        "fail-on-error": {
+          "description": "Fail the job when the V12 run ends failed or cancelled, or when waiting times out.",
+          "type": "boolean",
+          "default": false
+        },
+        "comment": {
+          "description": "Post or update the sticky pull request comment.",
+          "type": "boolean",
+          "default": true
+        },
+        "max-comment-findings": {
+          "description": "Maximum findings rendered with full details in the pull request comment.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "default": 25
+        },
+        "check-run": {
+          "description": "Create the check run with inline annotations.",
+          "type": "boolean",
+          "default": true
+        },
+        "check-run-name": {
+          "description": "Name of the check run.",
+          "type": "string",
+          "default": "V12 Security"
+        },
+        "max-annotations": {
+          "description": "Maximum inline annotations posted on the check run (GitHub accepts 50 per request; the action batches).",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000,
+          "default": 200
+        },
+        "upload-sarif": {
+          "description": "Upload the SARIF file to code scanning from within the action (needs security-events: write).",
+          "type": "boolean",
+          "default": false
+        },
+        "sarif-category": {
+          "description": "Code scanning category for the SARIF upload. Defaults to v12-audit/<mode>.",
+          "type": "string"
+        },
+        "job-summary": {
+          "description": "Write the job summary.",
+          "type": "boolean",
+          "default": true
+        },
+        "fetch-report": {
+          "description": "Download the run's Markdown report and expose it as the report-path output.",
+          "type": "boolean",
+          "default": true
+        },
+        "max-findings-detail": {
+          "description": "When V12's findings list is summary-only, fetch full details for at most this many findings (most severe first).",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000,
+          "default": 200
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "include": {
+          "description": "Paths or globs to audit. Directory prefixes (`contracts/`, `contracts/**`) are sent to V12 and reduce cost; other globs are expanded against the tree (at most 500 entries).",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 500
+        },
+        "exclude": {
+          "description": "Globs whose findings are hidden. Exclusions are applied by the action, not by V12, so they do not reduce cost.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "context-documents": {
+      "description": "V12 context document UIDs (UUIDs, see `v12 context list`) attached to every run. At most 100.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      },
+      "maxItems": 100,
+      "uniqueItems": true
+    },
+    "suppressions": {
+      "description": "Findings to hide from gating and the main tables. Every suppression expires; expired ones re-surface the finding with a warning.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "fingerprint",
+          "reason",
+          "expires"
+        ],
+        "properties": {
+          "fingerprint": {
+            "description": "The 16-character hex fingerprint printed in the finding's details in the pull request comment and job summary.",
+            "type": "string",
+            "pattern": "^[0-9a-f]{16}$"
+          },
+          "reason": {
+            "description": "Why the finding is accepted or mitigated. Shown in the suppressed section of the comment.",
+            "type": "string",
+            "minLength": 1
+          },
+          "expires": {
+            "description": "Date (YYYY-MM-DD, quote it in YAML) after which the suppression stops applying.",
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "approved-by": {
+            "description": "Who approved the suppression, for the audit trail.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notifications": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "slack": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "notify-on": {
+              "description": "When to send a Slack message.",
+              "type": "string",
+              "enum": [
+                "always",
+                "findings",
+                "gate-failure",
+                "never"
+              ],
+              "default": "gate-failure"
+            },
+            "mention-on-critical": {
+              "description": "Slack mention inserted when a critical finding is present, e.g. `<@U0123>` or `<!subteam^S0123>`.",
+              "type": "string"
+            },
+            "thread": {
+              "description": "Reply in the thread of the previous message for the same pull request instead of posting a new top-level message (bot token only).",
+              "type": "boolean",
+              "default": true
+            },
+            "include-snippets": {
+              "description": "Include finding descriptions and code snippets in Slack. Off by default: Slack retention is not the security team's call. Findings are linked instead.",
+              "type": "boolean",
+              "default": false
+            },
+            "channel": {
+              "description": "Channel ID or name for bot-token delivery.",
+              "type": "string"
+            },
+            "max-findings": {
+              "description": "How many findings to list in the message.",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 50,
+              "default": 5
+            }
+          }
+        }
+      }
+    }
+  }
+}

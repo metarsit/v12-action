@@ -1,0 +1,797 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-26T18:30:00Z",
+  "actionVersion": "test",
+  "skipped": null,
+  "run": {
+    "uid": 42,
+    "url": "https://v12.sh/runs/42",
+    "state": "completed",
+    "v12State": "completed",
+    "statusMessage": "Completed",
+    "name": "PR #12 Fix withdraw | reentrancy",
+    "startedAt": "2026-04-26T18:15:00.000Z",
+    "endedAt": "2026-04-26T18:27:30.000Z",
+    "durationSeconds": 750,
+    "costCents": 1250
+  },
+  "estimate": {
+    "quoteCents": 1250,
+    "createQuoteCents": 1250,
+    "billingMode": "usage",
+    "scopeFiles": 3,
+    "billableChangedLines": 37
+  },
+  "target": {
+    "mode": "pr",
+    "kind": "diff",
+    "repository": "acme/vault",
+    "serverUrl": "https://github.com",
+    "fromSha": "2222222222222222222222222222222222222222",
+    "toSha": "1111111111111111111111111111111111111111",
+    "branch": "fix/withdraw",
+    "sha": null,
+    "blobSha": "1111111111111111111111111111111111111111",
+    "displayRange": "2222222..1111111",
+    "since": null,
+    "mergeBaseNote": null,
+    "pr": {
+      "number": 12,
+      "url": "https://github.com/acme/vault/pull/12",
+      "title": "Fix withdraw | reentrancy",
+      "draft": false,
+      "headSha": "1111111111111111111111111111111111111111",
+      "baseSha": "2222222222222222222222222222222222222222",
+      "headRef": "fix/withdraw",
+      "baseRef": "main",
+      "headRepo": "acme/vault",
+      "baseRepo": "acme/vault",
+      "isFork": false
+    },
+    "commentPrNumber": 12,
+    "shallow": {
+      "was": false,
+      "unshallowed": false
+    },
+    "changedFiles": 3,
+    "changedFilesTotal": 3
+  },
+  "filters": {
+    "includeValidity": [
+      "valid",
+      "unreviewed"
+    ],
+    "ignoreAutoInvalidated": false,
+    "minSeverity": "info",
+    "failOn": "high",
+    "paths": [],
+    "excludePaths": [
+      "**/test/**"
+    ],
+    "failOnError": false
+  },
+  "counts": {
+    "critical": 4,
+    "high": 4,
+    "medium": 4,
+    "low": 2,
+    "info": 2,
+    "qa": 0,
+    "total": 16
+  },
+  "hidden": {
+    "validity": 4,
+    "autoInvalidated": 0,
+    "belowMinSeverity": 2,
+    "excludedPath": 2,
+    "total": 8
+  },
+  "totals": {
+    "fetched": 25,
+    "totalMatching": 25
+  },
+  "detail": {
+    "needed": false,
+    "fetched": 0,
+    "capped": false,
+    "cap": 200
+  },
+  "findings": [
+    {
+      "uid": 104,
+      "title": "Signature replay across chains",
+      "severity": "critical",
+      "validity": "valid",
+      "autoInvalidated": true,
+      "description": "The permit digest omits the chain id. A reviewer confirmed this despite the automatic invalidation.",
+      "impact": "Signatures can be replayed on forks.",
+      "rootCause": "EIP-712 domain separator without chainId.",
+      "webUrl": "https://v12.sh/runs/42/104",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Permit.sol#L30-L41"
+      ],
+      "commentCount": 2,
+      "createdAt": "2026-04-26T18:14:06.000Z",
+      "location": {
+        "file": "contracts/Permit.sol",
+        "startLine": 30,
+        "endLine": 41,
+        "snippet": "bytes32 digest = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline));",
+        "note": "",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Permit.sol#L30-L41",
+      "fingerprint": "c9ecb9cf8cf93ea3",
+      "ruleId": "v12/critical/across-chains-replay-signature-867eb1",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Permit.sol#L30-L41",
+      "hiddenReason": null,
+      "gate": true,
+      "isNew": false
+    },
+    {
+      "uid": 101,
+      "title": "Reentrancy in withdraw() lets a caller drain the vault",
+      "severity": "critical",
+      "validity": "valid",
+      "autoInvalidated": false,
+      "description": "`withdraw()` sends ETH with `call` before updating `balances[msg.sender]`, so a malicious receiver can re-enter and withdraw repeatedly.",
+      "impact": "Complete loss of vault funds.",
+      "rootCause": "State update happens after the external call (checks-effects-interactions violated).",
+      "webUrl": "https://v12.sh/runs/42/101",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L118-L121"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:03.000Z",
+      "location": {
+        "file": "contracts/Vault.sol",
+        "startLine": 118,
+        "endLine": 121,
+        "snippet": "(bool ok, ) = msg.sender.call{value: amount}(\"\");\nrequire(ok, \"transfer failed\");\nbalances[msg.sender] -= amount;",
+        "note": "external call before state update",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L118-L121",
+      "fingerprint": "03fd1caea09bb909",
+      "ruleId": "v12/critical/caller-drain-lets-reentrancy-vault-withdraw-4a96f6",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L118-L121",
+      "hiddenReason": null,
+      "gate": true,
+      "isNew": false
+    },
+    {
+      "uid": 103,
+      "title": "Integer overflow in reward accounting",
+      "severity": "critical",
+      "validity": "unreviewed",
+      "autoInvalidated": true,
+      "description": "Auto-invalidated by V12's PoC run: Solidity 0.8 checked arithmetic prevents this.",
+      "impact": "None (auto-invalidated).",
+      "rootCause": "Analysis assumed unchecked arithmetic.",
+      "webUrl": "https://v12.sh/runs/42/103",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Rewards.sol#L55-L57"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:05.000Z",
+      "location": {
+        "file": "contracts/Rewards.sol",
+        "startLine": 55,
+        "endLine": 57,
+        "snippet": "total += amount;",
+        "note": "",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Rewards.sol#L55-L57",
+      "fingerprint": "d8c8bf0ce16a1089",
+      "ruleId": "v12/critical/accounting-integer-overflow-reward-4dfc0e",
+      "detailFetched": false,
+      "inDiff": false,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Rewards.sol#L55-L57",
+      "hiddenReason": null,
+      "gate": true,
+      "isNew": false
+    },
+    {
+      "uid": 102,
+      "title": "Unchecked external call return value | funds stuck in escrow",
+      "severity": "critical",
+      "validity": "unreviewed",
+      "autoInvalidated": false,
+      "description": "The return value of `token.transfer` is ignored.",
+      "impact": "Tokens can be silently lost.",
+      "rootCause": "Missing require on the boolean return value.",
+      "webUrl": "https://v12.sh/runs/42/102",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L200"
+      ],
+      "commentCount": 1,
+      "createdAt": "2026-04-26T18:14:04.000Z",
+      "location": {
+        "file": "contracts/Vault.sol",
+        "startLine": 200,
+        "endLine": 200,
+        "snippet": "token.transfer(to, amount);",
+        "note": "",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L200",
+      "fingerprint": "75001bd88146f0dc",
+      "ruleId": "v12/critical/call-escrow-external-funds-return-stuck-unchecke-362a87",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L200",
+      "hiddenReason": null,
+      "gate": true,
+      "isNew": true
+    },
+    {
+      "uid": 118,
+      "title": "<script>alert(1)</script> Nonce reuse in signing routine",
+      "severity": "high",
+      "validity": "valid",
+      "autoInvalidated": false,
+      "description": "Second instance of the same nonce derivation (duplicate fingerprint case).",
+      "impact": "Key recovery.",
+      "rootCause": "Same as above.",
+      "webUrl": "https://v12.sh/runs/42/118",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/crypto/sign.rs#L90-L105"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:20.000Z",
+      "location": {
+        "file": "src/crypto/sign.rs",
+        "startLine": 90,
+        "endLine": 105,
+        "snippet": "let k = now_secs() as u64;\nlet sig = sign_with_nonce(&key, &msg, k);",
+        "note": "",
+        "lang": "rust"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/crypto/sign.rs#L90-L105",
+      "fingerprint": "76e409073bcd488c",
+      "ruleId": "v12/high/1-alert-nonce-reuse-routine-script-signing-517ecf",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/crypto/sign.rs#L90-L105",
+      "hiddenReason": null,
+      "gate": true,
+      "isNew": true
+    },
+    {
+      "uid": 108,
+      "title": "Missing access control on `setOwner`",
+      "severity": "high",
+      "validity": "unreviewed",
+      "autoInvalidated": false,
+      "description": "No location could be attributed: the function is generated by a proxy pattern at deploy time.",
+      "impact": "Anyone can take ownership.",
+      "rootCause": "Generated setter lacks the onlyOwner modifier.",
+      "webUrl": "https://v12.sh/runs/42/108",
+      "sourceUrls": [],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:10.000Z",
+      "location": {
+        "file": "",
+        "startLine": null,
+        "endLine": null,
+        "snippet": "",
+        "note": "",
+        "lang": ""
+      },
+      "locationCount": 0,
+      "hasLocation": false,
+      "blobUrl": null,
+      "fingerprint": "ca54c1231dd564f3",
+      "ruleId": "v12/high/access-control-missing-setowner-3b09e7",
+      "detailFetched": false,
+      "inDiff": false,
+      "sourceUrl": null,
+      "hiddenReason": null,
+      "gate": true,
+      "isNew": true
+    },
+    {
+      "uid": 105,
+      "title": "<script>alert(1)</script> Nonce reuse in signing routine",
+      "severity": "high",
+      "validity": "unreviewed",
+      "autoInvalidated": false,
+      "description": "The nonce is derived from the timestamp with second resolution.",
+      "impact": "Private key recovery from two signatures in the same second.",
+      "rootCause": "Deterministic nonce without message binding.",
+      "webUrl": "https://v12.sh/runs/42/105",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/crypto/sign.rs#L40-L55"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:07.000Z",
+      "location": {
+        "file": "src/crypto/sign.rs",
+        "startLine": 40,
+        "endLine": 55,
+        "snippet": "let k = now_secs() as u64;\nlet sig = sign_with_nonce(&key, &msg, k);",
+        "note": "nonce derivation",
+        "lang": "rust"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/crypto/sign.rs#L40-L55",
+      "fingerprint": "76e409073bcd488c",
+      "ruleId": "v12/high/1-alert-nonce-reuse-routine-script-signing-517ecf",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/crypto/sign.rs#L40-L55",
+      "hiddenReason": null,
+      "gate": true,
+      "isNew": true
+    },
+    {
+      "uid": 122,
+      "title": "Path traversal in module loader",
+      "severity": "high",
+      "validity": "unreviewed",
+      "autoInvalidated": false,
+      "description": "User-controlled module names are joined to a base path without normalisation.",
+      "impact": "Arbitrary file read.",
+      "rootCause": "Missing path normalisation.",
+      "webUrl": "https://v12.sh/runs/42/122",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/m%C3%B3dulo/file%20name.sol#L7-L9"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:24.000Z",
+      "location": {
+        "file": "src/módulo/file name.sol",
+        "startLine": 7,
+        "endLine": 9,
+        "snippet": "string memory p = string(abi.encodePacked(base, \"/\", name));",
+        "note": "",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/m%C3%B3dulo/file%20name.sol#L7-L9",
+      "fingerprint": "726c9cf20e4e84bd",
+      "ruleId": "v12/high/loader-module-path-traversal-227078",
+      "detailFetched": false,
+      "inDiff": false,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/m%C3%B3dulo/file%20name.sol#L7-L9",
+      "hiddenReason": null,
+      "gate": true,
+      "isNew": true
+    },
+    {
+      "uid": 123,
+      "title": "Price manipulation through flash-loaned liquidity",
+      "severity": "medium",
+      "validity": "valid",
+      "autoInvalidated": false,
+      "description": "# Not a heading\n\nThe spot price is read from the pool reserves in the same transaction.\n\n- reserves can be moved with a flash loan\n- the vault mints against the manipulated price\n\nSee <https://example.com/flash> and the `getPrice()` helper. Ends with an HTML comment terminator: -->",
+      "impact": "Under-collateralised minting. **Bold** should render literally.",
+      "rootCause": "Spot price used as oracle.",
+      "webUrl": "https://v12.sh/runs/42/123",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L250-L262"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:25.000Z",
+      "location": {
+        "file": "contracts/Vault.sol",
+        "startLine": 250,
+        "endLine": 262,
+        "snippet": "(uint112 r0, uint112 r1, ) = pair.getReserves();\nuint256 price = r1 * 1e18 / r0;",
+        "note": "spot price read",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L250-L262",
+      "fingerprint": "44d3f84c9ccf8d87",
+      "ruleId": "v12/medium/flash-liquidity-loaned-manipulation-price-throug-0b63fa",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L250-L262",
+      "hiddenReason": null,
+      "gate": false,
+      "isNew": true
+    },
+    {
+      "uid": 119,
+      "title": "Oracle staleness not checked",
+      "severity": "medium",
+      "validity": "unreviewed",
+      "autoInvalidated": false,
+      "description": "latestRoundData() is used without checking updatedAt.",
+      "impact": "Stale prices accepted.",
+      "rootCause": "Missing freshness check.",
+      "webUrl": "https://v12.sh/runs/42/119",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Oracle.sol#L44"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:21.000Z",
+      "location": {
+        "file": "contracts/Oracle.sol",
+        "startLine": 44,
+        "endLine": 44,
+        "snippet": "",
+        "note": "only startLine reported",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Oracle.sol#L44",
+      "fingerprint": "6bf6cb80de410fab",
+      "ruleId": "v12/medium/checked-not-oracle-staleness-728edf",
+      "detailFetched": false,
+      "inDiff": false,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Oracle.sol#L44",
+      "hiddenReason": null,
+      "gate": false,
+      "isNew": true
+    },
+    {
+      "uid": 111,
+      "title": "Überprüfung fehlt — signature malleability 🚨",
+      "severity": "medium",
+      "validity": "unreviewed",
+      "autoInvalidated": false,
+      "description": "ecrecover accepts high-s signatures.",
+      "impact": "Replay with a malleated signature.",
+      "rootCause": "No s-value bound check.",
+      "webUrl": "https://v12.sh/runs/42/111",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Permit.sol#L70-L72"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:13.000Z",
+      "location": {
+        "file": "contracts/Permit.sol",
+        "startLine": 70,
+        "endLine": 72,
+        "snippet": "address signer = ecrecover(digest, v, r, s);",
+        "note": "",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Permit.sol#L70-L72",
+      "fingerprint": "f13a7794ac00ef21",
+      "ruleId": "v12/medium/berpr-fehlt-fung-malleability-signature-93ba19",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Permit.sol#L70-L72",
+      "hiddenReason": null,
+      "gate": false,
+      "isNew": true
+    },
+    {
+      "uid": 110,
+      "title": "Unbounded loop over depositors",
+      "severity": "medium",
+      "validity": "unreviewed",
+      "autoInvalidated": true,
+      "description": "Auto-invalidated: the array is capped at 100 entries elsewhere.",
+      "impact": "Gas exhaustion.",
+      "rootCause": "Unbounded iteration.",
+      "webUrl": "https://v12.sh/runs/42/110",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L300-L310"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:12.000Z",
+      "location": {
+        "file": "contracts/Vault.sol",
+        "startLine": 300,
+        "endLine": 310,
+        "snippet": "for (uint i = 0; i < depositors.length; i++) {",
+        "note": "",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L300-L310",
+      "fingerprint": "e0c83f9665503f0a",
+      "ruleId": "v12/medium/depositors-loop-over-unbounded-d26495",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L300-L310",
+      "hiddenReason": null,
+      "gate": false,
+      "isNew": true
+    },
+    {
+      "uid": 113,
+      "title": "Floating pragma",
+      "severity": "low",
+      "validity": "unreviewed",
+      "autoInvalidated": false,
+      "description": "pragma solidity ^0.8.0 allows compilation with future compilers.",
+      "impact": "Unexpected compiler behaviour.",
+      "rootCause": "Unpinned pragma.",
+      "webUrl": "https://v12.sh/runs/42/113",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L2"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:15.000Z",
+      "location": {
+        "file": "contracts/Vault.sol",
+        "startLine": 2,
+        "endLine": 2,
+        "snippet": "pragma solidity ^0.8.0;",
+        "note": "",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L2",
+      "fingerprint": "c489c926ca7979b7",
+      "ruleId": "v12/low/floating-pragma-5a4fb5",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L2",
+      "hiddenReason": null,
+      "gate": false,
+      "isNew": true
+    },
+    {
+      "uid": 125,
+      "title": "Rounding favours the caller in share math",
+      "severity": "low",
+      "validity": "unreviewed",
+      "autoInvalidated": false,
+      "description": "Both deposit and redeem round in the caller's favour.",
+      "impact": "Slow value leak.",
+      "rootCause": "Rounding direction.",
+      "webUrl": "https://v12.sh/runs/42/125",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L140-L142",
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L160-L162"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:27.000Z",
+      "location": {
+        "file": "contracts/Vault.sol",
+        "startLine": 140,
+        "endLine": 142,
+        "snippet": "shares = amount * totalShares / totalAssets;",
+        "note": "deposit",
+        "lang": "solidity"
+      },
+      "locationCount": 2,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L140-L142",
+      "fingerprint": "c40df8f19d04fda8",
+      "ruleId": "v12/low/caller-favours-math-rounding-share-06cf11",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L140-L142",
+      "hiddenReason": null,
+      "gate": false,
+      "isNew": true
+    },
+    {
+      "uid": 114,
+      "title": "Event missing for ownership transfer",
+      "severity": "info",
+      "validity": "unreviewed",
+      "autoInvalidated": false,
+      "description": "No event is emitted when ownership changes.",
+      "impact": "Harder off-chain monitoring.",
+      "rootCause": "Missing emit.",
+      "webUrl": "https://v12.sh/runs/42/114",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Ownable.sol#L20-L22"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:16.000Z",
+      "location": {
+        "file": "contracts/Ownable.sol",
+        "startLine": 20,
+        "endLine": 22,
+        "snippet": "owner = newOwner;",
+        "note": "",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Ownable.sol#L20-L22",
+      "fingerprint": "2b1e12b62d22fe0a",
+      "ruleId": "v12/info/event-missing-ownership-transfer-d45a13",
+      "detailFetched": false,
+      "inDiff": false,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Ownable.sol#L20-L22",
+      "hiddenReason": null,
+      "gate": false,
+      "isNew": true
+    },
+    {
+      "uid": 124,
+      "title": "Redundant zero-address check",
+      "severity": "info",
+      "validity": "unreviewed",
+      "autoInvalidated": true,
+      "description": "Auto-invalidated: the check is not redundant after all.",
+      "impact": "None.",
+      "rootCause": "None.",
+      "webUrl": "https://v12.sh/runs/42/124",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L80"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:26.000Z",
+      "location": {
+        "file": "contracts/Vault.sol",
+        "startLine": 80,
+        "endLine": 80,
+        "snippet": "require(to != address(0));",
+        "note": "",
+        "lang": "solidity"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L80",
+      "fingerprint": "130eaf066b1505ce",
+      "ruleId": "v12/info/address-check-redundant-zero-1714c6",
+      "detailFetched": false,
+      "inDiff": true,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/contracts/Vault.sol#L80",
+      "hiddenReason": null,
+      "gate": false,
+      "isNew": true
+    }
+  ],
+  "suppressed": [
+    {
+      "uid": 109,
+      "title": "Fenced snippet: markdown injection via ``` in comments",
+      "severity": "medium",
+      "validity": "valid",
+      "autoInvalidated": false,
+      "description": "A snippet that contains a triple fence:\n\n```\nnot code\n```\n\nand a stray --> arrow.",
+      "impact": "Rendering breakage.",
+      "rootCause": "Unescaped fences.",
+      "webUrl": "https://v12.sh/runs/42/109",
+      "sourceUrls": [
+        "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/render.js#L10-L12"
+      ],
+      "commentCount": 0,
+      "createdAt": "2026-04-26T18:14:11.000Z",
+      "location": {
+        "file": "src/render.js",
+        "startLine": 10,
+        "endLine": 12,
+        "snippet": "const s = '```';\nconst t = `` + s;\n// -->",
+        "note": "",
+        "lang": "javascript"
+      },
+      "locationCount": 1,
+      "hasLocation": true,
+      "blobUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/render.js#L10-L12",
+      "fingerprint": "28c66ae399b0de16",
+      "ruleId": "v12/medium/comments-fenced-injection-markdown-snippet-5a3901",
+      "detailFetched": false,
+      "inDiff": false,
+      "sourceUrl": "https://github.com/acme/vault/blob/1111111111111111111111111111111111111111/src/render.js#L10-L12",
+      "hiddenReason": null,
+      "gate": false,
+      "suppression": {
+        "reason": "Fence rendering only; tracked in SEC-77",
+        "expires": "2099-12-31",
+        "approvedBy": "@security-team"
+      }
+    }
+  ],
+  "expiredSuppressions": [
+    {
+      "fingerprint": "c489c926ca7979b7",
+      "reason": "Pragma pinned in the release branch",
+      "expires": "2020-01-01",
+      "approvedBy": "",
+      "expired": true,
+      "matched": true
+    }
+  ],
+  "unmatchedSuppressions": [],
+  "gate": {
+    "failOn": "high",
+    "count": 8,
+    "failing": true,
+    "findingUids": [
+      104,
+      101,
+      103,
+      102,
+      118,
+      108,
+      105,
+      122
+    ]
+  },
+  "delta": {
+    "hasPrior": true,
+    "priorSha": "9999999999999999999999999999999999999999",
+    "priorRunUid": 41,
+    "new": [
+      {
+        "fp": "130eaf066b1505ce",
+        "count": 1
+      },
+      {
+        "fp": "2b1e12b62d22fe0a",
+        "count": 1
+      },
+      {
+        "fp": "44d3f84c9ccf8d87",
+        "count": 1
+      },
+      {
+        "fp": "6bf6cb80de410fab",
+        "count": 1
+      },
+      {
+        "fp": "726c9cf20e4e84bd",
+        "count": 1
+      },
+      {
+        "fp": "75001bd88146f0dc",
+        "count": 1
+      },
+      {
+        "fp": "76e409073bcd488c",
+        "count": 2
+      },
+      {
+        "fp": "c40df8f19d04fda8",
+        "count": 1
+      },
+      {
+        "fp": "c489c926ca7979b7",
+        "count": 1
+      },
+      {
+        "fp": "ca54c1231dd564f3",
+        "count": 1
+      },
+      {
+        "fp": "e0c83f9665503f0a",
+        "count": 1
+      },
+      {
+        "fp": "f13a7794ac00ef21",
+        "count": 1
+      }
+    ],
+    "resolved": [
+      {
+        "fp": "eeeeeeeeeeeeeeee",
+        "count": 1
+      },
+      {
+        "fp": "ffffffffffffffff",
+        "count": 1
+      }
+    ],
+    "newCount": 13,
+    "resolvedCount": 2,
+    "unchangedCount": 3
+  },
+  "conclusion": "failure",
+  "jobShouldFail": true
+}

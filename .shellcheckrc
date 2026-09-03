@@ -1,0 +1,6 @@
+# shellcheck configuration for v12-action.
+# Scripts embed jq programs in single quotes; the $vars inside them are jq
+# variables, not shell expansions, so SC2016 is disabled repository-wide.
+external-sources=true
+source-path=SCRIPTDIR
+disable=SC2016
