@@ -24,8 +24,9 @@ jobs:
         # zizmor: ignore[adhoc-packages] versions are pinned; no lockfile exists for CLI tools
         run: |
           set -euo pipefail
-          pip install --quiet "yamllint==1.35.1" "check-jsonschema==0.31.0" "jsonschema==4.23.0" "pyyaml==6.0.2"
-          npm install --global bats@1.11.1
+          pip install --quiet "yamllint==1.35.1" "check-jsonschema==0.31.0" "jsonschema==4.23.0"
+          git clone --quiet --depth 1 --branch v1.11.1 https://github.com/bats-core/bats-core.git "$RUNNER_TEMP/bats-core"
+          echo "$RUNNER_TEMP/bats-core/bin" >> "$GITHUB_PATH"
           go install mvdan.cc/sh/v3/cmd/shfmt@v3.10.0
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
           echo "$HOME/go/bin" >> "$GITHUB_PATH"

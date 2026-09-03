@@ -40,9 +40,9 @@ see request and response bodies (the token is masked).
 5. Add an entry to `CHANGELOG.md` under "Unreleased". Pull requests labelled
    `feature` or `fix` must touch the changelog.
 6. Open a pull request. CI runs lint, the test matrix (ubuntu-latest,
-   ubuntu-22.04, macos-latest; jq 1.6 and 1.7), SARIF schema validation,
-   the drift checks and an `estimate-only` smoke test against the real V12
-   API with the repository's token (skipped on pull requests from forks).
+   ubuntu-22.04, macos-latest; jq 1.6 and 1.7), SARIF schema validation
+   and the drift checks. Everything runs offline against the stub API; no
+   V12 token is needed for CI.
 
 ## Branch protection
 
@@ -62,9 +62,8 @@ are protected and created only by the release workflow.
 3. The Marketplace listing updates from the release; `branding.icon` must
    stay one of the Feather icons GitHub accepts (CI checks it).
 
-## Recurring cost
+## Testing against the real API
 
-The self-test workflow runs a real V12 diff review on a tiny fixture
-weekly and on pushes to `main`, and every pull request runs an
-`estimate-only` call. Both draw on the maintainers' V12 organization;
-expect a few dollars a month. Keep the fixture small.
+CI is fully offline. To exercise the real V12 API, run the
+`examples/estimate-only.yml` workflow in a repository that has a
+`V12_TOKEN` secret; it costs nothing (one estimate call).
