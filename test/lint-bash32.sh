@@ -42,6 +42,7 @@ run_check 'shopt -s globstar' 'globstar needs bash 4'
 run_check '\[\[ -v ' '[[ -v var ]] needs bash 4.2'
 run_check '\$\{[A-Za-z_][A-Za-z0-9_]*\[-[0-9]+\]\}' 'negative array indexes need bash 4.3'
 run_check '\blocal [A-Za-z_][A-Za-z0-9_]*=\$\(' 'local x=$(cmd) hides the command failure under set -e; declare then assign'
+run_check '\] && .* && (break|continue|return|exit)\b' '"[ test ] && cmd && break" exits the script under set -e when the test is false; use an explicit if'
 run_check '\b(sed -i|grep -P|date -d |readlink -f|stat -c|base64 -w|xargs -r|sort -V|find [^|]* -printf)\b' 'GNU-only tool flag; macOS ships BSD userland'
 run_check '\bsha256sum\b' 'sha256sum is not on macOS; use sha256_hex from lib.sh'
 

@@ -126,6 +126,26 @@ setup() { new_work; }
   require_tools
 }
 
+@test "json_get prints nothing for null or missing fields (jq -r prints 'null' otherwise)" {
+  . "$SCRIPTS/lib.sh"
+  printf '{"a": null, "b": "x", "n": 0}' >"$V12_WORK_DIR/j.json"
+  [ -z "$(json_get "$V12_WORK_DIR/j.json" '.a')" ]
+  [ -z "$(json_get "$V12_WORK_DIR/j.json" '.missing')" ]
+  [ "$(json_get "$V12_WORK_DIR/j.json" '.b')" = "x" ]
+  [ "$(json_get "$V12_WORK_DIR/j.json" '.n')" = "0" ]
+  [ "$(jq -r '.a' "$V12_WORK_DIR/j.json")" = "null" ]
+}
+
+@test "the '[ test ] && cmd && break' footgun is rejected by the bash 3.2 lint" {
+  printf '#!/usr/bin/env bash\nset -e\nwhile :; do\n  [ -n "$x" ] && [ "$y" -ge "$z" ] && break\ndone\n' >"$V12_WORK_DIR/bad.sh"
+  run bash "$ROOT/test/lint-bash32.sh" "$V12_WORK_DIR/bad.sh"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"exits the script under set -e"* ]]
+  printf '#!/usr/bin/env bash\nset -e\nif [ -n "$x" ] && [ "$y" -ge "$z" ]; then break; fi\n' >"$V12_WORK_DIR/good.sh"
+  run bash "$ROOT/test/lint-bash32.sh" "$V12_WORK_DIR/good.sh"
+  [ "$status" -eq 0 ]
+}
+
 @test "die inside a subshell does not kill the caller (footgun regression)" {
   . "$SCRIPTS/lib.sh"
   local out
