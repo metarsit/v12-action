@@ -96,7 +96,8 @@ PY
 @test "comment: the state block round-trips fingerprints and the Slack thread" {
   render_fixture findings
   local state
-  state=$(jq -R -s -L "$V12_JQ_LIB" 'include "common"; state_decode' "$V12_WORK_DIR/comment.md")
+  . "$SCRIPTS/lib.sh"
+  state=$(jqx -R -s 'include "common"; state_decode' "$V12_WORK_DIR/comment.md")
   [ "$(jq -r '.sha' <<<"$state")" = "1111111111111111111111111111111111111111" ]
   [ "$(jq -r '.run' <<<"$state")" = "42" ]
   [ "$(jq -r '.fps | length' <<<"$state")" = "$(jq '.findings | length' "$FIXTURES/report-findings.json")" ]

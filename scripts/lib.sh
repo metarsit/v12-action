@@ -145,12 +145,52 @@ now_iso() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 
 # money CENTS - "$12.50" (n/a for empty).
 money() {
-  printf '%s' "${1:-null}" | jq -L "$V12_JQ_LIB" -r 'include "common"; money_cents'
+  printf '%s' "${1:-null}" | jqx -r 'include "common"; money_cents'
 }
 
-# jq wrapper that always has the shared library on its search path.
+# jq_assemble PROGRAM - replaces the leading `include "name";` directives of
+# a jq program with the contents of scripts/jq/name.jq (recursively, each
+# module once, dependencies first). jq's own module loader is not used at
+# runtime: jq 1.8.2 (shipped on macOS runners) aborts in its compiler when
+# these modules are loaded through `include`, while the same code as one
+# program works on every jq from 1.6 to 1.8.2.
+jq_assemble() {
+  local prog="$1" name queue="" ordered="" out=""
+  queue=$(printf '%s' "$prog" | grep -oE 'include "[A-Za-z0-9_-]+";' | sed -E 's/include "([^"]+)";/\1/' | tr '\n' ' ')
+  # Resolve dependencies: a module's own include lines come before it.
+  _jq_visit() {
+    local mod="$1" dep deps
+    case " $ordered " in *" $mod "*) return 0 ;; esac
+    [ -f "$V12_JQ_LIB/$mod.jq" ] || die "jq module '$mod' not found in $V12_JQ_LIB"
+    deps=$(grep -oE '^include "[A-Za-z0-9_-]+";' "$V12_JQ_LIB/$mod.jq" | sed -E 's/include "([^"]+)";/\1/' | tr '\n' ' ')
+    for dep in $deps; do
+      _jq_visit "$dep"
+    done
+    ordered="$ordered $mod"
+  }
+  for name in $queue; do
+    _jq_visit "$name"
+  done
+  for name in $ordered; do
+    out="$out$(grep -vE '^include "[A-Za-z0-9_-]+";' "$V12_JQ_LIB/$name.jq")
+"
+  done
+  printf '%s\n%s' "$out" "$(printf '%s' "$prog" | sed -E 's/include "[A-Za-z0-9_-]+";//g')"
+}
+
+# jqx [jq args...] - jq with the shared library: the program argument (the
+# one starting with `include "`) is expanded by jq_assemble.
 jqx() {
-  jq -L "$V12_JQ_LIB" "$@"
+  local args=() a trimmed
+  for a in "$@"; do
+    # Programs may start with a newline and indentation before the include.
+    trimmed="${a#"${a%%[![:space:]]*}"}"
+    case "$trimmed" in
+      'include "'*) a=$(jq_assemble "$a") ;;
+    esac
+    args+=("$a")
+  done
+  jq "${args[@]+"${args[@]}"}"
 }
 
 # json_get FILE EXPR - raw value of a jq expression, empty for null.

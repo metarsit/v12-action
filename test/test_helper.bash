@@ -23,10 +23,17 @@ start_stub() {
   : >"$STUB_LOG"
   python3 "$ROOT/test/stub-api.py" --port-file "$STUB_DIR/port" --log "$STUB_LOG" >"$STUB_DIR/stub.err" 2>&1 3>&- &
   STUB_PID=$!
-  for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
-    [ -s "$STUB_DIR/port" ] && break
+  # A cold Python start on a fresh macOS runner can take several seconds.
+  local waited=0
+  while [ ! -s "$STUB_DIR/port" ] && [ "$waited" -lt 300 ]; do
     sleep 0.1
+    waited=$((waited + 1))
   done
+  if [ ! -s "$STUB_DIR/port" ]; then
+    echo "stub API did not start within 30s; stderr:" >&2
+    cat "$STUB_DIR/stub.err" >&2 || true
+    return 1
+  fi
   STUB_PORT="$(cat "$STUB_DIR/port")"
   V12_API_URL="http://127.0.0.1:${STUB_PORT}"
   export STUB_DIR STUB_LOG STUB_PID STUB_PORT V12_API_URL

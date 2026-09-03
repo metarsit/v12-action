@@ -49,7 +49,9 @@ setup() {
 # event NAME [jq-object-of-extra-fields] - writes event.json directly. The
 # second argument is a jq object expression merged over the defaults.
 event() {
-  local name="$1" extra="${2:-{\}}"
+  local name="$1" extra="${2:-}"
+  # bash 3.2 keeps the backslash in "${2:-{\}}", so build the default here
+  [ -n "$extra" ] || extra='{}'
   jq -n --arg name "$name" --arg sha "$(git -C "$REPO" rev-parse HEAD)" \
     '{eventName: $name, repository: "acme/vault", serverUrl: "https://github.com", sha: $sha, ref: "refs/heads/main",
       refName: "main", refType: "branch", pr: null, mergeGroup: null, push: null, release: null, commentPrNumber: null, isFork: false} + ('"$extra"')' >"$V12_WORK_DIR/event.json"

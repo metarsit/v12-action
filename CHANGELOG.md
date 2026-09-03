@@ -82,6 +82,9 @@ commit messages.
   offline.
 - **Zip source is out of scope** for v1; "repositories without the V12 app"
   therefore means public repositories.
+- **No jq module loader at runtime.** `jqx` inlines the `scripts/jq/*.jq`
+  modules into one program; jq 1.8.2 (the version on macOS runners) aborts
+  in its compiler when the same modules are loaded with `include`.
 - **CI needs no V12 token.** The suite runs entirely against the offline
   stub; the estimate-only smoke job and the self-test workflow from the
   brief were removed so the repository carries no live credential.

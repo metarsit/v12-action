@@ -57,10 +57,13 @@ Data flows through JSON files in `$V12_WORK_DIR` (a per-run temp dir):
    or `sl` (Slack), never into shell.
 7. **Secrets never land in files or outputs.** `config.json` carries only
    "configured" booleans for Slack credentials.
-8. **jq 1.6 compatibility.** No `trim`, `abs`, `toarray`, `pick`,
+8. **jq 1.6 to 1.8 compatibility.** No `trim`, `abs`, `toarray`, `pick`,
    `splits/2`, `debug/1`; bind values before `index($v)` (an argument to
    `index` is evaluated against the array); mind that `"" | split("/")` is
-   `[]`.
+   `[]`. Scripts call jq only through `jqx`, which inlines the
+   `scripts/jq/*.jq` modules into one program instead of using `-L` and
+   jq's module loader: jq 1.8.2 (macOS runners) aborts in its compiler when
+   these modules are loaded with `include`.
 
 ## Running the tests
 
