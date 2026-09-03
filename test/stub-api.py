@@ -24,6 +24,11 @@ repoFullName
   acme/nocost        run 47: completed run without a cost field
   acme/many          run 48: 300 generated findings
   acme/clean         run 49: completes with no findings
+
+Slack (under /slack/): bot token xoxb-good works; channel C-missing ->
+channel_not_found, C-notin -> not_in_channel; chat.update succeeds only
+for ts 1700000000.000100; /slack/webhook/<anything> returns ok,
+/slack/webhook/bad returns 404.
   acme/empty         estimate with billableChangedLines 0 (diff) / 0 files (full)
   acme/pricey        estimate priceCents 999900
   acme/badshape      estimate returns an unexpected shape
@@ -162,6 +167,8 @@ class Handler(BaseHTTPRequestHandler):
             "headers": {k: v for k, v in self.headers.items() if k.lower() != "authorization"},
             "token": token, "body": body,
         })
+        if path.startswith("/slack/"):
+            return self._slack(path, body, token)
         if token is None or token not in ("v12p_ok", "v12p_readonly", "v12p_ratelimit", "v12p_flaky", "v12p_retryafter"):
             return self._error(401, "invalid or missing token")
         if token == "v12p_ratelimit" and self._first_hit(token, path):
@@ -414,6 +421,32 @@ class Handler(BaseHTTPRequestHandler):
             page = [{k: f[k] for k in ("uid", "runUid", "title", "severity", "validity", "autoInvalidated", "webUrl")} for f in page]
         return self._send(200, {"findings": page, "totalMatching": len(items), "hasMore": offset + len(page) < len(items),
                                 "limit": limit, "offset": offset})
+
+    # -- Slack stand-in (bot token API + incoming webhook) --------------------
+    def _slack(self, path, body, token):
+        if path.startswith("/slack/webhook/"):
+            if path.endswith("/bad"):
+                return self._send(404, raw=b"no_service", content_type="text/plain")
+            return self._send(200, raw=b"ok", content_type="text/plain")
+        if path in ("/slack/api/chat.postMessage", "/slack/api/chat.update"):
+            if token != "xoxb-good":
+                return self._send(200, {"ok": False, "error": "invalid_auth"})
+            if not isinstance(body, dict):
+                return self._send(200, {"ok": False, "error": "invalid_json"})
+            channel = body.get("channel")
+            if channel == "C-missing":
+                return self._send(200, {"ok": False, "error": "channel_not_found"})
+            if channel == "C-notin":
+                return self._send(200, {"ok": False, "error": "not_in_channel"})
+            if path.endswith("chat.update"):
+                if body.get("ts") == "1700000000.000100":
+                    return self._send(200, {"ok": True, "channel": channel, "ts": body.get("ts")})
+                return self._send(200, {"ok": False, "error": "message_not_found"})
+            with State.lock:
+                State.hits[("slack-ts",)] = State.hits.get(("slack-ts",), 0) + 1
+                n = State.hits[("slack-ts",)]
+            return self._send(200, {"ok": True, "channel": channel, "ts": "1700000001.%06d" % n})
+        return self._error(404, "not found")
 
     def _finding(self, uid, fuid):
         with State.lock:

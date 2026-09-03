@@ -21,6 +21,11 @@ summary_md="$(work_file summary.md)"
 surfaces='null'
 if [ -n "${V12_SURFACES:-}" ] && printf '%s' "$V12_SURFACES" | jq -e 'type == "object"' >/dev/null 2>&1; then
   surfaces="$V12_SURFACES"
+elif [ -n "${V12_SURFACE_COMMENT:-}${V12_SURFACE_CHECK:-}${V12_SURFACE_SARIF:-}${V12_SURFACE_SLACK:-}" ]; then
+  # action.yml passes one variable per surface (step outputs), assembled here.
+  surfaces=$(jq -n --arg c "${V12_SURFACE_COMMENT:-not run}" --arg k "${V12_SURFACE_CHECK:-not run}" \
+    --arg s "${V12_SURFACE_SARIF:-not run}" --arg l "${V12_SURFACE_SLACK:-not run}" \
+    '{"Pull request comment": $c, "Check run": $k, "SARIF": $s, "Slack": $l}')
 fi
 
 jqx -r --arg version "$V12_ACTION_VERSION" --argjson surfaces "$surfaces" \

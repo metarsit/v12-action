@@ -32,9 +32,18 @@ from_sha=""
 to_sha=""
 blob_sha=""
 
+# comment_key - the sticky-comment marker key: comment-key input, else the mode.
+comment_key() {
+  local key
+  key=$(cfg .commentKey)
+  [ -n "$key" ] || key="${mode:-audit}"
+  printf '%s' "$key" | tr -c 'A-Za-z0-9_.:/-' '-' | cut -c1-64
+}
+
 skip() {
   # skip REASON MESSAGE - record a skip and exit 0.
   local reason="$1" message="$2"
+  set_output comment-key "$(comment_key)"
   log_notice "V12 audit skipped ($reason): $message"
   local existing='{}'
   if [ -s "$refs_json" ] && jq -e 'type == "object"' "$refs_json" >/dev/null 2>&1; then
@@ -413,6 +422,7 @@ jq -n \
 set_output skipped "false"
 set_output mode "$mode"
 set_output audit-kind "$kind"
+set_output comment-key "$(comment_key)"
 set_output commit-range "$(jq -r '.displayRange' "$refs_json")"
 log_info "Target: $(jq -r 'if .kind == "diff" then "diff review \(.fromSha)..\(.toSha) on \(.repository)" else "full audit of \(.repository) \(.branch) @ \(.sha)" end' "$refs_json")"
 if [ "$(jq -r '.apiPaths | length' "$refs_json")" != "0" ]; then

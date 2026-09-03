@@ -87,7 +87,7 @@ print(hashlib.sha256(material.encode()).hexdigest()[:16])
 PY
 )
   [ "$(rep '.findings[] | select(.uid == 101) | .fingerprint')" = "$expected" ]
-  [[ "$(rep '.findings[] | select(.uid == 101) | .ruleId')" == v12/critical/caller-drain-lets-reentrancy-vault-withdraw-* ]]
+  [[ "$(rep '.findings[] | select(.uid == 101) | .ruleId')" == v12/critical/reentrancy-in-withdraw-lets-a-caller-drain-the-v-* ]]
 }
 
 @test "locations, blob links, language and in-diff flags are derived" {
