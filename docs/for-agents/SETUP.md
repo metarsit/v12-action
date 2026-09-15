@@ -25,8 +25,10 @@ routing from CI, or when results must feed other steps.
 Ask the user to do the following; an agent cannot do it (token creation is
 manual in V12, and the token is shown once):
 
-1. In V12, switch to the organization that owns the repository (a token is
-   bound to one organization).
+1. In V12, switch to the organization the runs should land in (a token is
+   bound to one organization, and every run it creates is listed and billed
+   there). A team organization must have a GitHub organization connected and
+   the V12 GitHub app installed first (Settings -> Organization).
 2. Settings -> Developer -> create a personal access token.
 3. **Tick the scopes `runs:read` and `runs:write`** in the scope picker.
    New tokens default to read-only scopes and the first run fails with

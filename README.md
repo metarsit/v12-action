@@ -54,10 +54,16 @@ default is informative: findings never fail the job until you set
 
 ### 1. Create the token
 
-1. In V12, switch to the **organization that owns the repository**. A token
-   is bound to exactly one organization at creation; a token created under
-   your personal organization cannot write runs for a team repository, and
-   losing membership of the bound organization returns `401`.
+1. In V12, switch to the **organization the runs should land in**. A token
+   is bound to exactly one organization at creation, and every run it
+   creates is listed and billed under that organization: a token created
+   under your personal organization sends every run to your personal
+   organization. Losing membership of the bound organization returns `401`.
+   A team organization needs a GitHub organization connected and the V12
+   GitHub app installed (**Settings -> Organization**) before its tokens can
+   create runs; a public repository is then auditable from any such
+   organization, a private one only from the organization whose app
+   installation covers it.
 2. Go to **Settings -> Developer** and create a personal access token
    (`v12p_*`). It is shown once.
 3. **In the scope picker, tick `runs:read` and `runs:write`** (and
@@ -877,7 +883,9 @@ check is green whenever the run completed. Read the comment.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `403 ... lacks the 'runs:write' scope` | the token was created with the default scopes | create a new token and tick `runs:write` in the scope picker |
-| `401 ... rejected the token` | wrong or expired token, or the token's user left the organization the token is bound to | create a token while switched to the organization that owns the repository |
+| `401 ... rejected the token` | wrong or expired token, or the token's user left the organization the token is bound to | create a token while switched to the organization the runs should land in |
+| `424 GitHub account is not connected to this organization` | the token belongs to a team organization without a GitHub connection | in V12, switch to that organization, connect the GitHub organization and install the V12 GitHub app (Settings -> Organization) |
+| runs land in the wrong V12 organization | the token was created under another organization | create the token while switched to the organization the runs should land in and replace the secret |
 | `skipped (empty-diff)` on every scheduled run | shallow clone: the window cannot be resolved | set `fetch-depth: 0` on `actions/checkout` (the action unshallows when it can and warns) |
 | `skipped (fork-pr)` | pull requests from forks have no secrets | expected; review after merge, on a schedule, or with `pull_request_target` after reading the security notes |
 | SARIF upload rejected | job lacks `security-events: write`, or code scanning is disabled | add the permission; enable code scanning; the file is still at `sarif-path` |
