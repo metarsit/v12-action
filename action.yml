@@ -450,7 +450,7 @@ runs:
 
     - id: find-comment
       if: steps.collect.outcome == 'success' && steps.preflight.outputs.skipped != 'true'
-      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       env:
         V12_ACTION_PATH: ${{ github.action_path }}
         V12_COMMENT_KEY: ${{ steps.refs.outputs.comment-key || inputs.comment-key || 'audit' }}
@@ -504,7 +504,7 @@ runs:
       if: >-
         steps.render-comment.outcome == 'success'
         && steps.render-comment.outputs.comment-action != 'skip'
-      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       env:
         V12_ACTION_PATH: ${{ github.action_path }}
         V12_COMMENT_MARKER: ${{ steps.render-comment.outputs.comment-marker }}
@@ -537,7 +537,7 @@ runs:
 
     - id: check-run
       if: steps.render-check.outcome == 'success' && steps.render-check.outputs.check-action == 'create'
-      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       env:
         V12_ACTION_PATH: ${{ github.action_path }}
         V12_CHECK_PATH: ${{ steps.render-check.outputs.check-path }}
